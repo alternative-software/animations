@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>MorphSnos</title>
+<style>
+  :root{
+    --bg:#0e1621;
+    --panel:#17212b;
+    --panel2:#1d2a35;
+    --in:#182533;
+    --out:#2b5278;
+    --txt:#e9edf1;
+    --dim:#7d8e9e;
+    --accent:#51a6e8;
+    --sep:rgba(255,255,255,.055);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  html,body{background:#000;overflow:hidden}
+  body{width:400px;height:600px}
+  #frame{position:relative;width:400px;height:600px;overflow:hidden;background:var(--bg);
+    font-family:'Inter','Inter Display',sans-serif;color:var(--txt);letter-spacing:-.01em}
+
+  /* ---------- status bar ---------- */
+  .statusbar{position:absolute;top:0;left:0;right:0;height:26px;z-index:60;
+    display:flex;align-items:center;justify-content:space-between;padding:0 14px;
+    font-size:11.5px;font-weight:600;color:#fff;background:var(--panel)}
+  .sb-right{display:flex;align-items:center;gap:5px;opacity:.95}
+
+  /* ---------- screens ---------- */
+  .screen{position:absolute;top:26px;left:0;width:400px;height:574px;background:var(--bg);
+    overflow:hidden;will-change:transform;box-shadow:-8px 0 24px rgba(0,0,0,.45)}
+  .dim{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:50}
+
+  /* ---------- header ---------- */
+  .header{position:absolute;top:0;left:0;right:0;height:52px;background:var(--panel);
+    display:flex;align-items:center;padding:0 10px;gap:8px;z-index:20;
+    border-bottom:1px solid rgba(0,0,0,.25)}
+  .hvariant{position:absolute;inset:0;height:52px;display:flex;align-items:center;padding:0 10px;gap:8px}
+  .iconbtn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+    border-radius:50%;flex:0 0 auto}
+  .htitle{display:flex;flex-direction:column;justify-content:center;min-width:0;flex:1}
+  .hname{font-size:14.5px;font-weight:600;line-height:1.15;white-space:nowrap}
+  .hsub{font-size:11.5px;color:var(--dim);line-height:1.3;margin-top:1px;position:relative;height:14px}
+  .hsub span{position:absolute;left:0;top:0;white-space:nowrap}
+  .hsub .typing{color:var(--accent)}
+
+  .av{border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+    font-weight:700;color:#fff;overflow:hidden}
+  .av-q{background:linear-gradient(145deg,#f0785a,#d2453f)}
+  .av-bot{background:linear-gradient(145deg,#8e7cff,#4f46c9)}
+  .av-dead{background:#44525f}
+  .av-36{width:36px;height:36px;font-size:15px}
+  .av-50{width:50px;height:50px;font-size:19px}
+
+  /* ---------- chat body ---------- */
+  .wall{position:absolute;top:52px;bottom:56px;left:0;right:0;overflow:hidden;
+    background:
+      radial-gradient(120% 90% at 85% 0%,rgba(81,166,232,.10),transparent 60%),
+      radial-gradient(110% 80% at 0% 100%,rgba(130,90,220,.12),transparent 62%),
+      radial-gradient(rgba(255,255,255,.028) 1px,transparent 1.2px) 0 0/22px 22px,
+      var(--bg)}
+  .msgs{position:absolute;left:0;right:0;bottom:0;padding:10px 12px 12px;
+    display:flex;flex-direction:column;align-items:stretch;gap:7px}
+  .pill{align-self:center;background:rgba(0,0,0,.35);color:#cfd9e2;font-size:10.5px;font-weight:500;
+    padding:4px 11px;border-radius:999px;margin:4px 0;text-align:center;max-width:280px;line-height:1.35}
+  .row{display:flex;width:100%}
+  .row.me{justify-content:flex-end}
+  .row.them{justify-content:flex-start}
+  .bub{max-width:264px;padding:7px 11px 8px;border-radius:14px;font-size:13.5px;line-height:1.32;
+    position:relative;display:flex;align-items:flex-end;gap:7px;will-change:transform,opacity;
+    box-shadow:0 1px 2px rgba(0,0,0,.25)}
+  .bub.them{background:var(--in);border-bottom-left-radius:5px}
+  .bub.me{background:var(--out);border-bottom-right-radius:5px}
+  .bub .time{font-size:9.5px;color:rgba(255,255,255,.45);flex:0 0 auto;transform:translateY(2px)}
+  .bub.me .time{color:rgba(255,255,255,.6)}
+  .mono{font-variant-ligatures:none}
+
+  .dots{display:flex;align-items:center;gap:4px;height:16px;padding:1px 2px}
+  .dots i{width:6px;height:6px;border-radius:50%;background:#8fa3b5;display:block}
+
+  .exec{display:inline-flex;align-items:center;gap:7px;position:relative}
+  .execlabel{position:relative;display:inline-block;min-width:92px;height:18px}
+  .execlabel>span{position:absolute;left:0;top:0;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  .spin{width:12px;height:12px;flex:0 0 auto}
+  .spin circle{fill:none;stroke:rgba(255,255,255,.22);stroke-width:2}
+  .spin path{fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
+
+  /* ---------- input bar ---------- */
+  .inputbar{position:absolute;left:0;right:0;bottom:0;height:56px;background:var(--panel);
+    display:flex;align-items:center;gap:8px;padding:0 10px;z-index:20;
+    border-top:1px solid rgba(0,0,0,.25)}
+  .field{flex:1;min-width:0;position:relative;display:flex;align-items:center;height:36px;
+    border-radius:18px;background:var(--panel2);padding:0 12px;font-size:13.5px;color:var(--txt);overflow:hidden}
+  .field .ph{color:#6f8294;position:absolute;left:12px;top:50%;transform:translateY(-50%)}
+  .caret{display:inline-block;width:1.5px;height:16px;background:var(--accent);margin-left:1px;
+    transform:translateY(2px)}
+  .send{width:36px;height:36px;border-radius:50%;background:var(--accent);
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+    box-shadow:0 2px 8px rgba(81,166,232,.35)}
+  .lockbar{position:absolute;inset:0;background:var(--panel);display:flex;align-items:center;
+    justify-content:center;gap:7px;font-size:12.5px;color:var(--dim);opacity:0}
+
+  /* ---------- chat list ---------- */
+  .listhead{position:absolute;top:0;left:0;right:0;height:52px;background:var(--panel);
+    display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:20;
+    border-bottom:1px solid rgba(0,0,0,.25)}
+  .listhead h1{font-size:17px;font-weight:650}
+  .rows{position:absolute;top:52px;left:0;right:0;bottom:0}
+  .lrow{position:relative;height:70px;display:flex;align-items:center;gap:11px;padding:0 14px}
+  .lrow .hl{position:absolute;inset:0;background:#2b5278;opacity:0}
+  .lrow .meta{flex:1;min-width:0;position:relative;z-index:2}
+  .lrow .top{display:flex;align-items:center;gap:6px}
+  .lname{font-size:14.5px;font-weight:600;white-space:nowrap}
+  .badge{font-size:8.5px;font-weight:700;letter-spacing:.04em;background:#51a6e8;color:#0e1621;
+    padding:1.5px 4px;border-radius:4px;transform:translateY(-.5px)}
+  .lmsg{font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+  .lright{display:flex;flex-direction:column;align-items:flex-end;gap:5px;position:relative;z-index:2}
+  .ltime{font-size:10.5px;color:#6f8294}
+  .unread{min-width:19px;height:19px;border-radius:999px;background:var(--accent);color:#0e1621;
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px}
+  .sepline{position:absolute;left:75px;right:0;bottom:0;height:1px;background:var(--sep)}
+  .avwrap{position:relative;z-index:2}
+
+  /* ---------- keyboard ---------- */
+  .botbottom{position:absolute;left:0;right:0;bottom:0;height:236px;z-index:20;will-change:transform}
+  .botbottom .inputbar{position:absolute;top:0;bottom:auto}
+  .kb{position:absolute;top:56px;left:0;right:0;height:180px;background:#1b2530;padding:7px 3px 10px;
+    display:flex;flex-direction:column;gap:7px;border-top:1px solid rgba(0,0,0,.35)}
+  .kblayer{position:absolute;inset:0;padding:7px 3px 10px;display:flex;flex-direction:column;gap:7px}
+  .krow{display:flex;gap:5px;justify-content:center;flex:1;padding:0 3px}
+  .key{flex:1;display:flex;align-items:center;justify-content:center;background:#3a4854;border-radius:6px;
+    font-size:15px;font-weight:500;color:#eef3f7;box-shadow:0 1px 0 rgba(0,0,0,.45);position:relative}
+  .key.fn{background:#2b3843;font-size:11.5px;color:#c6d3de;flex:0 0 42px}
+  .key.sp{flex:4}
+  .key .fl{position:absolute;inset:0;border-radius:6px;background:#5a6e7e;opacity:0}
+  .key .pop{position:absolute;left:50%;bottom:100%;transform:translate(-50%,-4px) scale(.7);
+    background:#5f7384;border-radius:7px;padding:6px 11px;font-size:19px;opacity:0;box-shadow:0 4px 10px rgba(0,0,0,.45)}
+
+  /* ---------- pointer / fx ---------- */
+  #ptr{position:absolute;width:42px;height:42px;border-radius:50%;z-index:90;opacity:0;
+    margin:-21px 0 0 -21px;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.34),rgba(255,255,255,.16) 62%,rgba(255,255,255,.04) 100%);
+    border:1.5px solid rgba(255,255,255,.55);backdrop-filter:blur(1px)}
+  #ripple{position:absolute;width:40px;height:40px;border-radius:50%;z-index:89;opacity:0;
+    margin:-20px 0 0 -20px;border:2px solid rgba(255,255,255,.85)}
+  #flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:95;pointer-events:none}
+  #fade{position:absolute;inset:0;background:#000;opacity:0;z-index:98;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="frame">
+
+  <div class="statusbar">
+    <div id="clock">21:04</div>
+    <div class="sb-right">
+      <svg width="15" height="11" viewBox="0 0 15 11"><g fill="#fff"><rect x="0" y="7.5" width="2.4" height="3.5" rx=".6"/><rect x="3.8" y="5.5" width="2.4" height="5.5" rx=".6"/><rect x="7.6" y="3" width="2.4" height="8" rx=".6"/><rect x="11.4" y="0" width="2.4" height="11" rx=".6" opacity=".4"/></g></svg>
+      <svg width="14" height="11" viewBox="0 0 14 11"><path d="M7 9.6 1 3.9A8.4 8.4 0 0 1 13 3.9L7 9.6Z" fill="none" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" opacity=".95"/></svg>
+      <svg width="22" height="11" viewBox="0 0 22 11"><rect x=".7" y=".7" width="17.6" height="9.6" rx="2.6" fill="none" stroke="#fff" stroke-width="1.2" opacity=".6"/><rect x="2.4" y="2.4" width="11.5" height="6.2" rx="1.4" fill="#fff"/><path d="M20 4v3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".6"/></svg>
+    </div>
+  </div>
+
+  <!-- ===================== CHAT LIST ===================== -->
+  <div class="screen" id="sc_list">
+    <div class="listhead">
+      <h1>Чаты</h1>
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#8fa3b5" stroke-width="1.7" stroke-linecap="round"><circle cx="7.6" cy="7.6" r="5.4"/><path d="M11.6 11.6 16 16"/></svg>
+    </div>
+    <div class="rows">
+
+      <div class="lrow" id="row_doxer">
+        <div class="hl"></div>
+        <div class="avwrap"><div class="av av-q av-50" id="row_dox_av">?</div></div>
+        <div class="meta">
+          <div class="top"><div class="lname" id="row_dox_name">Незнакомец</div></div>
+          <div class="lmsg" id="row_dox_msg">жди докс</div>
+        </div>
+        <div class="lright">
+          <div class="ltime">21:04</div>
+          <div class="unread" id="row_dox_unread">1</div>
+        </div>
+        <div class="sepline"></div>
+      </div>
+
+      <div class="lrow" id="row_bot">
+        <div class="hl"></div>
+        <div class="avwrap"><div class="av av-bot av-50">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7.5" width="16" height="12" rx="4"/><path d="M12 7.5V4.2"/><circle cx="12" cy="3.2" r="1.3" fill="#fff" stroke="none"/><circle cx="9.2" cy="13" r="1.35" fill="#fff" stroke="none"/><circle cx="14.8" cy="13" r="1.35" fill="#fff" stroke="none"/><path d="M9.6 16.6h4.8"/></svg>
+        </div></div>
+        <div class="meta">
+          <div class="top"><div class="lname">MorphSnos</div><div class="badge">BOT</div></div>
+          <div class="lmsg">Отправьте @username цели</div>
+        </div>
+        <div class="lright"><div class="ltime">20:51</div></div>
+        <div class="sepline"></div>
+      </div>
+
+      <div class="lrow">
+        <div class="hl"></div>
+        <div class="avwrap"><div class="av av-50" style="background:linear-gradient(145deg,#f58fb4,#c7467d)">А</div></div>
+        <div class="meta"><div class="top"><div class="lname">Аня</div></div>
+        <div class="lmsg">ок, завтра созвонимся</div></div>
+        <div class="lright"><div class="ltime">19:20</div></div>
+        <div class="sepline"></div>
+      </div>
+
+      <div class="lrow">
+        <div class="hl"></div>
+        <div class="avwrap"><div class="av av-50" style="background:linear-gradient(145deg,#6fd48a,#2f9e63)">П</div></div>
+        <div class="meta"><div class="top"><div class="lname">Проект</div></div>
+        <div class="lmsg">Макс: закинул макеты в папку</div></div>
+        <div class="lright"><div class="ltime">18:44</div></div>
+        <div class="sepline"></div>
+      </div>
+
+      <div class="lrow">
+        <div class="hl"></div>
+        <div class="avwrap"><div class="av av-50" style="background:linear-gradient(145deg,#5fb8f0,#2f72c4)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linejoin="round"><path d="M6.5 4h11v16l-5.5-4.2L6.5 20V4Z"/></svg>
+        </div></div>
+        <div class="meta"><div class="top"><div class="lname">Избранное</div></div>
+        <div class="lmsg">ссылка на документ</div></div>
+        <div class="lright"><div class="ltime">11:02</div></div>
+        <div class="sepline"></div>
+      </div>
+
+    </div>
+    <div class="dim" id="dim_list"></div>
+  </div>
+
+  <!-- ===================== CHAT: DOXER ===================== -->
+  <div class="screen" id="sc_dox">
+    <div class="header">
+      <div class="hvariant" id="hdr_alive">
+        <div class="iconbtn" id="dox_back">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#9fb3c4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4.5 6.5 10l6 5.5"/></svg>
+        </div>
+        <div class="av av-q av-36">?</div>
+        <div class="htitle">
+          <div class="hname">Незнакомец</div>
+          <div class="hsub">
+            <span id="dox_seen">был(а) недавно</span>
+            <span class="typing" id="dox_typing" style="opacity:0">печатает…</span>
+          </div>
+        </div>
+      </div>
+      <div class="hvariant" id="hdr_dead" style="opacity:0">
+        <div class="iconbtn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#9fb3c4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4.5 6.5 10l6 5.5"/></svg>
+        </div>
+        <div class="av av-dead av-36">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa9b6" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8.4" r="3.6"/><path d="M5.4 19.2c.6-3.5 3.4-5.4 6.6-5.4s6 1.9 6.6 5.4"/></svg>
+        </div>
+        <div class="htitle">
+          <div class="hname" style="color:#aebecb">Удалённый аккаунт</div>
+          <div class="hsub"><span style="color:#5e7081">аккаунт удалён</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wall">
+      <div class="msgs" id="dox_msgs">
+        <div class="pill">Сегодня</div>
+        <div class="row me"><div class="bub me">ты кто?<span class="time">21:03</span></div></div>
+        <div class="row them" id="dox_typebub"><div class="bub them"><span class="dots"><i></i><i></i><i></i></span></div></div>
+        <div class="row them" id="dox_msg"><div class="bub them" id="dox_msg_b">жди докс<span class="time">21:04</span></div></div>
+        <div class="pill" id="dox_service" style="opacity:0">Аккаунт удалён</div>
+      </div>
+    </div>
+
+    <div class="inputbar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7d8e9e" stroke-width="1.8" stroke-linecap="round"><path d="M14.5 6.5 8 13a3 3 0 0 0 4.2 4.2l7-7a4.5 4.5 0 0 0-6.4-6.4l-7.2 7.2a6.5 6.5 0 0 0 9.2 9.2L19 16"/></svg>
+      <div class="field"><span class="ph">Сообщение</span></div>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7d8e9e" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.2c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><circle cx="9.2" cy="9.8" r=".9" fill="#7d8e9e" stroke="none"/><circle cx="14.8" cy="9.8" r=".9" fill="#7d8e9e" stroke="none"/></svg>
+      <div class="lockbar" id="dox_lock">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7d8e9e" stroke-width="2" stroke-linecap="round"><rect x="4.5" y="10.5" width="15" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
+        <span>Вы не можете писать в этот чат</span>
+      </div>
+    </div>
+    <div class="dim" id="dim_dox"></div>
+  </div>
+
+  <!-- ===================== CHAT: BOT ===================== -->
+  <div class="screen" id="sc_bot">
+    <div class="header">
+      <div class="hvariant">
+        <div class="iconbtn" id="bot_back">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#9fb3c4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4.5 6.5 10l6 5.5"/></svg>
+        </div>
+        <div class="av av-bot av-36">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7.5" width="16" height="12" rx="4"/><path d="M12 7.5V4.2"/><circle cx="12" cy="3.2" r="1.3" fill="#fff" stroke="none"/><circle cx="9.2" cy="13" r="1.35" fill="#fff" stroke="none"/><circle cx="14.8" cy="13" r="1.35" fill="#fff" stroke="none"/><path d="M9.6 16.6h4.8"/></svg>
+        </div>
+        <div class="htitle">
+          <div class="hname">MorphSnos</div>
+          <div class="hsub"><span id="bot_sub">бот</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wall" id="bot_wall">
+      <div class="msgs" id="bot_msgs">
+        <div class="pill">Сегодня</div>
+        <div class="row them"><div class="bub them">Привет. Отправьте @username цели.<span class="time">20:51</span></div></div>
+        <div class="row me" id="bot_usermsg"><div class="bub me"><span class="mono">@doxer123</span><span class="time">21:05</span></div></div>
+        <div class="row them" id="bot_typebub"><div class="bub them"><span class="dots"><i></i><i></i><i></i></span></div></div>
+        <div class="row them" id="bot_status">
+          <div class="bub them" id="bot_status_b">
+            <span class="exec"><span class="execlabel">
+              <span id="lbl_exec"><svg class="spin" id="spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 9 9"/></svg><span id="exectext">выполняю</span></span>
+              <span id="lbl_done" style="opacity:0"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6fd48a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"/></svg><span style="color:#cfe9d6">готово</span></span>
+            </span></span>
+            <span class="time" id="bot_status_time">21:05</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="botbottom" id="botbottom">
+      <div class="inputbar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7d8e9e" stroke-width="1.8" stroke-linecap="round"><path d="M14.5 6.5 8 13a3 3 0 0 0 4.2 4.2l7-7a4.5 4.5 0 0 0-6.4-6.4l-7.2 7.2a6.5 6.5 0 0 0 9.2 9.2L19 16"/></svg>
+        <div class="field"><span id="bot_ph" class="ph">Сообщение</span><span class="mono" id="bot_typed"></span><span class="caret" id="bot_caret" style="opacity:0"></span></div>
+        <div class="send" id="bot_send">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#0e1621"><path d="M3.4 11.3 20 4.2c.9-.4 1.8.5 1.4 1.4l-7.1 16.6c-.4.9-1.7.8-2-.2l-1.9-6-6-1.9c-1-.3-1.1-1.6-.2-2Z"/></svg>
+        </div>
+      </div>
+      <div class="kb"><div class="kblayer" id="kb_abc"><div class="krow"><div class="key" data-ch="q"><span class="fl"></span><span class="pop">q</span>q</div><div class="key" data-ch="w"><span class="fl"></span><span class="pop">w</span>w</div><div class="key" data-ch="e"><span class="fl"></span><span class="pop">e</span>e</div><div class="key" data-ch="r"><span class="fl"></span><span class="pop">r</span>r</div><div class="key" data-ch="t"><span class="fl"></span><span class="pop">t</span>t</div><div class="key" data-ch="y"><span class="fl"></span><span class="pop">y</span>y</div><div class="key" data-ch="u"><span class="fl"></span><span class="pop">u</span>u</div><div class="key" data-ch="i"><span class="fl"></span><span class="pop">i</span>i</div><div class="key" data-ch="o"><span class="fl"></span><span class="pop">o</span>o</div><div class="key" data-ch="p"><span class="fl"></span><span class="pop">p</span>p</div></div><div class="krow" style="padding:0 20px"><div class="key" data-ch="a"><span class="fl"></span><span class="pop">a</span>a</div><div class="key" data-ch="s"><span class="fl"></span><span class="pop">s</span>s</div><div class="key" data-ch="d"><span class="fl"></span><span class="pop">d</span>d</div><div class="key" data-ch="f"><span class="fl"></span><span class="pop">f</span>f</div><div class="key" data-ch="g"><span class="fl"></span><span class="pop">g</span>g</div><div class="key" data-ch="h"><span class="fl"></span><span class="pop">h</span>h</div><div class="key" data-ch="j"><span class="fl"></span><span class="pop">j</span>j</div><div class="key" data-ch="k"><span class="fl"></span><span class="pop">k</span>k</div><div class="key" data-ch="l"><span class="fl"></span><span class="pop">l</span>l</div></div><div class="krow"><div class="key fn">⇧</div><div class="key" data-ch="z"><span class="fl"></span><span class="pop">z</span>z</div><div class="key" data-ch="x"><span class="fl"></span><span class="pop">x</span>x</div><div class="key" data-ch="c"><span class="fl"></span><span class="pop">c</span>c</div><div class="key" data-ch="v"><span class="fl"></span><span class="pop">v</span>v</div><div class="key" data-ch="b"><span class="fl"></span><span class="pop">b</span>b</div><div class="key" data-ch="n"><span class="fl"></span><span class="pop">n</span>n</div><div class="key" data-ch="m"><span class="fl"></span><span class="pop">m</span>m</div><div class="key fn">⌫</div></div><div class="krow"><div class="key fn">?123</div><div class="key" data-ch="@" style="flex:0 0 46px"><span class="fl"></span><span class="pop">@</span>@</div><div class="key sp"></div><div class="key" data-ch="." style="flex:0 0 40px"><span class="fl"></span><span class="pop">.</span>.</div><div class="key fn">⏎</div></div></div><div class="kblayer" id="kb_123" style="opacity:0"><div class="krow"><div class="key" data-ch="1"><span class="fl"></span><span class="pop">1</span>1</div><div class="key" data-ch="2"><span class="fl"></span><span class="pop">2</span>2</div><div class="key" data-ch="3"><span class="fl"></span><span class="pop">3</span>3</div><div class="key" data-ch="4"><span class="fl"></span><span class="pop">4</span>4</div><div class="key" data-ch="5"><span class="fl"></span><span class="pop">5</span>5</div><div class="key" data-ch="6"><span class="fl"></span><span class="pop">6</span>6</div><div class="key" data-ch="7"><span class="fl"></span><span class="pop">7</span>7</div><div class="key" data-ch="8"><span class="fl"></span><span class="pop">8</span>8</div><div class="key" data-ch="9"><span class="fl"></span><span class="pop">9</span>9</div><div class="key" data-ch="0"><span class="fl"></span><span class="pop">0</span>0</div></div><div class="krow"><div class="key" data-ch="-"><span class="fl"></span><span class="pop">-</span>-</div><div class="key" data-ch="/"><span class="fl"></span><span class="pop">/</span>/</div><div class="key" data-ch=":"><span class="fl"></span><span class="pop">:</span>:</div><div class="key" data-ch=";"><span class="fl"></span><span class="pop">;</span>;</div><div class="key" data-ch="("><span class="fl"></span><span class="pop">(</span>(</div><div class="key" data-ch=")"><span class="fl"></span><span class="pop">)</span>)</div><div class="key" data-ch="$"><span class="fl"></span><span class="pop">$</span>$</div><div class="key" data-ch="&"><span class="fl"></span><span class="pop">&</span>&</div><div class="key" data-ch="""><span class="fl"></span><span class="pop">"</span>"</div></div><div class="krow"><div class="key fn">#+=</div><div class="key" data-ch="."><span class="fl"></span><span class="pop">.</span>.</div><div class="key" data-ch=","><span class="fl"></span><span class="pop">,</span>,</div><div class="key" data-ch="?"><span class="fl"></span><span class="pop">?</span>?</div><div class="key" data-ch="!"><span class="fl"></span><span class="pop">!</span>!</div><div class="key" data-ch="'"><span class="fl"></span><span class="pop">'</span>'</div><div class="key fn">⌫</div></div><div class="krow"><div class="key fn">ABC</div><div class="key" data-ch="@" style="flex:0 0 46px"><span class="fl"></span><span class="pop">@</span>@</div><div class="key sp"></div><div class="key fn">⏎</div></div></div></div>
+    </div>
+    <div class="dim" id="dim_bot"></div>
+  </div>
+
+  <div id="ripple"></div>
+  <div id="ptr"></div>
+  <div id="flash"></div>
+  <div id="fade"></div>
+</div>
+
+<script>
+/* ======================= timeline (seconds) ======================= */
+const T = {
+  typing:    1.00,   // "печатает…" в чате с доксером
+  msgIn:     2.30,   // приходит «жди докс»
+  tapBack1:  3.90,   // тап по стрелке назад
+  nav1:      4.00,   // → список чатов
+  tapBot:    5.30,   // тап по боту
+  nav2:      5.42,   // → чат с ботом
+  focus:     6.30,   // фокус в поле ввода
+  typeA:     6.60, typeB: 8.35,   // печать @doxer123
+  tapSend:   8.85,
+  sendMsg:   8.95,   // уходит сообщение
+  botTyping: 9.45,
+  botExec:  10.10,   // «выполняю…»
+  kbHide:    9.30,
+  botDone:  13.10,   // ровно +3.00 с → «готово»
+  tapBack2: 14.60,
+  nav3:     14.70,   // → список чатов
+  tapDox:   15.95,
+  nav4:     16.05,   // → чат с доксером
+  deleted:  17.40,   // профиль → удалённый аккаунт
+  END:      20.60
+};
+const NAVDUR = 0.44;
+
+const NAV = [
+  {t:T.nav1, from:'dox',  to:'list', dir:'pop'},
+  {t:T.nav2, from:'list', to:'bot',  dir:'push'},
+  {t:T.nav3, from:'bot',  to:'list', dir:'pop'},
+  {t:T.nav4, from:'list', to:'dox',  dir:'push'}
+];
+const START_SCREEN = 'dox';
+
+const TAPS = [
+  {t:T.tapBack1, x:27,  y:52,  hold:'dox_back'},
+  {t:T.tapBot,   x:300, y:183, hold:'row_bot'},
+  {t:T.tapSend,  x:372, y:392, hold:null},
+  {t:T.tapBack2, x:27,  y:52,  hold:'bot_back'},
+  {t:T.tapDox,   x:300, y:113, hold:'row_doxer'}
+];
+
+/* ======================= helpers ======================= */
+const $=id=>document.getElementById(id);
+const clamp=(v,a=0,b=1)=>v<a?a:v>b?b:v;
+const k=(t,a,b)=>clamp((t-a)/(b-a));
+const lerp=(a,b,p)=>a+(b-a)*p;
+const eOut=p=>1-Math.pow(1-p,3);
+const eOut4=p=>1-Math.pow(1-p,4);
+const eInOut=p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+const eBack=p=>{const c=1.6;return 1+(c+1)*Math.pow(p-1,3)+c*Math.pow(p-1,2)};
+const set=(el,o)=>{for(const key in o)el.style[key]=o[key]};
+
+const SC={list:$('sc_list'),dox:$('sc_dox'),bot:$('sc_bot')};
+const FLASHES=[...document.querySelectorAll('.key .fl')];
+const KEYMAP={};
+document.querySelectorAll('.key[data-ch]').forEach(el=>{
+  const c=el.dataset.ch;
+  (KEYMAP[c]=KEYMAP[c]||[]).push(el.querySelector('.fl'));
+});
+const DIM={list:$('dim_list'),dox:$('dim_dox'),bot:$('dim_bot')};
+
+/* появление пузыря: scale + fade + подъём */
+function bubbleIn(rowEl,t,t0){
+  const p=k(t,t0,t0+0.34), e=eBack(p);
+  const b=rowEl.firstElementChild;
+  set(rowEl,{opacity:p<=0?'0':String(clamp(k(t,t0,t0+0.18)))});
+  set(b,{transform:`translateY(${lerp(10,0,eOut(p)).toFixed(2)}px) scale(${lerp(.86,1,e).toFixed(4)})`,
+         transformOrigin: rowEl.classList.contains('me')?'100% 100%':'0% 100%'});
+  set(rowEl,{display:t<t0?'none':'flex'});
+}
+function hideRow(rowEl){set(rowEl,{display:'none',opacity:'0'})}
+function showTyping(rowEl,t,t0,t1){
+  if(t<t0||t>=t1){hideRow(rowEl);return}
+  set(rowEl,{display:'flex'});
+  bubbleIn(rowEl,t,t0);
+  const fo=k(t,t1-0.14,t1);
+  set(rowEl,{opacity:String(clamp(k(t,t0,t0+0.18))*(1-fo))});
+  const ds=rowEl.querySelectorAll('.dots i');
+  ds.forEach((d,i)=>{
+    const ph=((t-t0)*1.45-i*0.17)%1;
+    const s=0.62+0.38*Math.max(0,Math.sin(Math.PI*clamp(ph*1.6)));
+    d.style.transform=`scale(${s.toFixed(3)})`;
+    d.style.opacity=(0.45+0.55*(s-0.62)/0.38).toFixed(3);
+  });
+}
+
+/* ======================= main render ======================= */
+function render(t){
+  /* ---- навигация между экранами ---- */
+  const pos={list:120,dox:120,bot:120};
+  let cur=START_SCREEN, idx=-1;
+  for(let i=0;i<NAV.length;i++) if(t>=NAV[i].t) idx=i;
+  for(const key in pos) DIM[key].style.opacity='0';
+  if(idx<0){ pos[cur]=0; }
+  else{
+    const n=NAV[idx], p=eOut4(k(t,n.t,n.t+NAVDUR));
+    if(n.dir==='push'){ pos[n.from]=-25*p; pos[n.to]=100*(1-p); DIM[n.from].style.opacity=(0.35*p).toFixed(3); }
+    else{ pos[n.from]=100*p; pos[n.to]=-25*(1-p); DIM[n.to].style.opacity=(0.35*(1-p)).toFixed(3); }
+    cur=n.to;
+  }
+  for(const key in pos){
+    const off=pos[key];
+    set(SC[key],{transform:`translateX(${(off*4).toFixed(2)}px)`,visibility:off>=119?'hidden':'visible'});
+  }
+
+  /* ---- экран: чат с доксером ---- */
+  const dead=k(t,T.deleted,T.deleted+0.42);
+  $('hdr_alive').style.opacity=(1-dead).toFixed(3);
+  $('hdr_dead').style.opacity=dead.toFixed(3);
+  set($('hdr_dead').querySelector('.htitle'),{transform:`translateY(${lerp(6,0,eOut(dead)).toFixed(2)}px)`});
+  set($('hdr_alive').querySelector('.htitle'),{transform:`translateY(${lerp(0,-6,dead).toFixed(2)}px)`});
+
+  const typingOn=k(t,T.typing,T.typing+0.2)*(1-k(t,T.msgIn-0.12,T.msgIn));
+  $('dox_typing').style.opacity=(typingOn*(1-dead)).toFixed(3);
+  $('dox_seen').style.opacity=((1-typingOn)*(1-dead)).toFixed(3);
+
+  showTyping($('dox_typebub'),t,T.typing+0.12,T.msgIn);
+  bubbleIn($('dox_msg'),t,T.msgIn);
+  set($('dox_msg_b'),{filter:`grayscale(${(dead*0.75).toFixed(2)}) brightness(${(1-dead*0.18).toFixed(3)})`});
+  const svc=k(t,T.deleted+0.18,T.deleted+0.6);
+  set($('dox_service'),{opacity:svc.toFixed(3),transform:`translateY(${lerp(8,0,eOut(svc)).toFixed(2)}px)`});
+  $('dox_lock').style.opacity=dead.toFixed(3);
+  $('row_dox_av').style.filter=`grayscale(${dead.toFixed(2)})`;
+
+  /* ---- экран: чат с ботом ---- */
+  const typedFull='@doxer123';
+  const tp=k(t,T.typeA,T.typeB);
+  const nch=t<T.typeA?0:Math.round(tp*typedFull.length);
+  const sent=t>=T.sendMsg;
+  $('bot_typed').textContent=sent?'':typedFull.slice(0,nch);
+  $('bot_ph').style.opacity=(nch>0&&!sent)?'0':(sent?clamp(k(t,T.sendMsg+0.08,T.sendMsg+0.3)).toFixed(3):'1');
+  const focused=t>=T.focus&&!sent;
+  $('bot_caret').style.opacity=focused?(((t*1.7)%1)<0.55?'1':'0'):'0';
+  const sendVis=clamp(k(t,T.typeA+0.05,T.typeA+0.28))*(sent?clamp(1-k(t,T.sendMsg,T.sendMsg+0.18)):1);
+  const press=clamp(1-Math.abs(t-T.tapSend)/0.16);
+  set($('bot_send'),{opacity:sendVis.toFixed(3),
+    transform:`scale(${(lerp(.6,1,eBack(sendVis))*(1-0.12*press)).toFixed(4)}) rotate(${lerp(-35,0,eOut(sendVis)).toFixed(1)}deg)`});
+
+  /* клавиатура */
+  const KBH=180;
+  const kbP=eOut(clamp(k(t,T.focus,T.focus+0.34)-k(t,T.kbHide,T.kbHide+0.30)));
+  set($('botbottom'),{transform:`translateY(${(KBH*(1-kbP)).toFixed(2)}px)`});
+  set($('bot_wall'),{bottom:(56+KBH*kbP).toFixed(1)+'px'});
+  const swT=T.typeA+(6/typedFull.length)*(T.typeB-T.typeA)-0.10, sw=k(t,swT,swT+0.2);
+  $('kb_abc').style.opacity=(1-sw).toFixed(3);
+  $('kb_123').style.opacity=sw.toFixed(3);
+  FLASHES.forEach(e=>e.style.opacity='0');
+  for(let i=0;i<typedFull.length;i++){
+    const ti=T.typeA+((i+1)/typedFull.length)*(T.typeB-T.typeA)-0.05;
+    const a=clamp(1-Math.abs(t-ti)/0.12);
+    if(a<=0) continue;
+    (KEYMAP[typedFull[i]]||[]).forEach(el=>{el.style.opacity=(a*.9).toFixed(3)});
+  }
+
+  bubbleIn($('bot_usermsg'),t,T.sendMsg);
+  showTyping($('bot_typebub'),t,T.botTyping,T.botExec);
+  bubbleIn($('bot_status'),t,T.botExec);
+
+  const done=k(t,T.botDone,T.botDone+0.34);
+  $('lbl_exec').style.opacity=(1-clamp(done*1.6)).toFixed(3);
+  set($('lbl_exec'),{transform:`translateY(${(-5*done).toFixed(2)}px)`});
+  $('lbl_done').style.opacity=clamp(k(t,T.botDone+0.1,T.botDone+0.4)).toFixed(3);
+  set($('lbl_done'),{transform:`translateY(${lerp(6,0,eOut(k(t,T.botDone+0.1,T.botDone+0.45))).toFixed(2)}px)`});
+  const dn=Math.floor(Math.max(0,t-T.botExec)*2)%3+1;
+  $('exectext').textContent='выполняю'+'.'.repeat(dn);
+  set($('spin'),{transform:`rotate(${((t-T.botExec)*420%360).toFixed(1)}deg)`,transformOrigin:'50% 50%'});
+  if(t>=T.botDone+0.05){
+    const pop=clamp(k(t,T.botDone,T.botDone+0.3));
+    set($('bot_status_b'),{transform:`scale(${(1+0.045*Math.sin(Math.PI*pop)).toFixed(4)})`,transformOrigin:'0% 100%'});
+  } else set($('bot_status_b'),{transform:'none'});
+
+  /* ---- список чатов: непрочитанное ---- */
+  $('row_dox_unread').style.opacity=t<T.nav1+0.1?'1':'0';
+  $('row_dox_name').textContent = t>=T.deleted+0.2 ? 'Удалённый аккаунт' : 'Незнакомец';
+  $('row_dox_msg').textContent  = t>=T.deleted+0.2 ? 'аккаунт удалён' : 'жди докс';
+
+  /* ---- указатель и тапы ---- */
+  let px=0,py=0,op=0,sc=1,rip=0,ripOp=0;
+  for(const key of ['dox_back','bot_back','row_bot','row_doxer','bot_send']){
+    const el=$(key); if(el){const h=el.querySelector?el.querySelector('.hl'):null; if(h)h.style.opacity='0';}
+  }
+  for(let i=0;i<TAPS.length;i++){
+    const tap=TAPS[i], prev=TAPS[i-1];
+    const appear=tap.t-0.62, gone=tap.t+0.42;
+    if(t<appear||t>gone+0.1) continue;
+    const from = prev && (tap.t-prev.t)<1.6 ? {x:prev.x,y:prev.y} : {x:tap.x+(tap.x>200?-70:70),y:Math.min(tap.y+110,540)};
+    const mp=eInOut(k(t,appear,tap.t-0.06));
+    px=lerp(from.x,tap.x,mp); py=lerp(from.y,tap.y,mp);
+    const fadeIn=k(t,appear,appear+0.18), fadeOut=k(t,tap.t+0.16,gone);
+    op=fadeIn*(1-fadeOut);
+    const pr=clamp(1-Math.abs(t-tap.t)/0.17);
+    sc=1-0.22*pr;
+    const rp=k(t,tap.t,tap.t+0.5);
+    if(rp>0&&rp<1){ rip=lerp(.55,2.9,eOut(rp)); ripOp=(1-rp)*0.75; }
+    if(tap.hold){
+      const el=$(tap.hold); const hl=el&&el.querySelector('.hl');
+      if(hl) hl.style.opacity=(0.30*clamp(1-Math.abs(t-tap.t)/0.28)).toFixed(3);
+    }
+  }
+  set($('ptr'),{left:px+'px',top:py+'px',opacity:op.toFixed(3),transform:`scale(${sc.toFixed(3)})`});
+  set($('ripple'),{left:px+'px',top:py+'px',opacity:ripOp.toFixed(3),transform:`scale(${rip.toFixed(3)})`});
+
+  /* ---- вспышка при удалении + фейды ---- */
+  $('flash').style.opacity=(0.085*clamp(1-Math.abs(t-T.deleted)/0.16)).toFixed(3);
+  const fIn=1-k(t,0,0.55), fOut=k(t,T.END-0.55,T.END);
+  $('fade').style.opacity=Math.max(fIn,fOut).toFixed(3);
+  $('clock').textContent = t<T.sendMsg-0.5?'21:04':'21:05';
+}
+
+window.__render=t=>{render(t);return true};
+window.__DUR=T.END;
+render(0);
+</script>
+</body>
+</html>
