@@ -1,21 +1,42 @@
 # -*- coding: utf-8 -*-
-"""Синтез звуковой дорожки под анимацию (без внешних сэмплов)."""
-import numpy as np, wave, struct, math
+"""Синтез звуковой дорожки под анимацию (без сэмплов, чистый numpy).
+Тайминг совпадает с объектом T в src/scene.html."""
+import numpy as np, wave, math
 
 SR   = 48000
-DUR  = 20.60
+DUR  = 59.60
 N    = int(SR * DUR)
 rng  = np.random.default_rng(7)
 mix  = np.zeros((2, N), dtype=np.float64)
 
 # ---------- тайминг (совпадает с T в scene.html) ----------
-T = dict(typing=1.00, msgIn=2.30, nav1=4.00, nav2=5.42, focus=6.30,
-         typeA=6.60, typeB=8.35, sendMsg=8.95, kbHide=9.30, botTyping=9.45,
-         botExec=10.10, botDone=13.10, nav3=14.70, nav4=16.05, deleted=17.40)
-TAPS = [3.90, 5.30, 8.85, 14.60, 15.95]
-NAVS = [T['nav1'], T['nav2'], T['nav3'], T['nav4']]
-KEYS = [T['typeA'] + (i + 1) / 9 * (T['typeB'] - T['typeA']) - 0.05 for i in range(9)]
-CAPS = [1.45, 4.45, 6.95, 10.40]
+T = dict(
+  scrollA=0.90, scrollAe=2.05, scrollB=2.45, scrollBe=3.25,
+  hl=3.45, tapCat=4.35, sheetIn=4.45, tapBuy=6.30, modalIn=6.45, tapYes=7.55,
+  fly=7.95, flyEnd=8.95, avPop=8.92,
+  navList1=12.50, timerOn=12.95, notifIn=13.60, tapNotif=14.55, navDox1=14.75,
+  d1type=15.30, d1=16.10, kbOn=17.15, qA=17.35, qB=18.25, sendQ=18.60,
+  d2type=19.05, d2=19.85, capName=20.40,
+  okA=24.60, okB=25.90, sendOk=26.20, d3type=26.65, d3=27.25,
+  noA=27.85, noB=29.25, sendNo=29.55, kbOff=29.90,
+  d4type=30.15, gift1=30.80, gift2=31.55,
+  tapBack1=32.90, navList2=33.02, tapBot=34.10, navBot=34.22,
+  focusBot=34.95, uA=35.25, uB=36.95, tapSend=37.35, sendU=37.45,
+  kbHide=37.80, botTyping=37.95, botExec=38.60, botDone=41.60,
+  tapBack2=43.10, navList3=43.22, tapDox=44.30, navDox2=44.42,
+  ghost=45.20, delBtn=46.40, END=59.60)
+
+TAPS = [T['tapCat'], T['tapBuy'], T['tapYes'], T['tapNotif'], T['sendQ']-0.08,
+        T['sendOk']-0.08, T['sendNo']-0.08, T['tapBack1'], T['tapBot'],
+        T['tapSend'], T['tapBack2'], T['tapDox']]
+NAVS = [T['navList1'], T['navDox1'], T['navList2'], T['navBot'], T['navList3'], T['navDox2']]
+
+def keys(a, b, text):
+    n = len(text)
+    return [a + (i + 1) / n * (b - a) - 0.03 for i in range(n)]
+KEYS = (keys(T['qA'], T['qB'], 'ты кто?') + keys(T['okA'], T['okB'], 'хорошо, хорошо. Щас отправлю подарок')
+        + keys(T['noA'], T['noB'], 'черт, у меня нету звёзд на передачу') + keys(T['uA'], T['uB'], '@doxsv_tbog'))
+CAPS = [9.15, 20.40, 46.95, 50.70, 54.40]
 
 # ---------- утилиты ----------
 def t_axis(dur): return np.arange(int(SR * dur)) / SR
@@ -154,76 +175,184 @@ def riser(dur=1.2):
     tone = sine(np.linspace(180, 900, int(SR * dur)), dur) * np.linspace(0, 0.5, int(SR * dur)) ** 2
     return (band * 0.6 + tone * 0.5) * env_ad(dur, dur * 0.95, 0.04)
 
-# ---------- музыкальная подложка ----------
-def pad(freqs, dur, detune=0.004):
+
+# =====================================================================
+#                        музыкальная подложка
+# =====================================================================
+def pad(freqs, dur, detune=0.004, cut=1100):
     t = t_axis(dur); out = np.zeros(t.size)
     for f in freqs:
         out += sine(f, dur) * 0.5 + sine(f * (1 + detune), dur) * 0.4 + sine(f * 0.5, dur) * 0.25
-    out = lp1(out / len(freqs), 1100)
+    out = lp1(out / len(freqs), cut)
     lfo = 0.85 + 0.15 * np.sin(2 * np.pi * 0.17 * t)
     return out * lfo
 
-# тёмный пад (ля минор) -> светлый (до мажор) после «готово»
-p1 = pad([220.0, 261.63, 329.63], T['botDone'] + 0.4)
-p1 *= env_ad(p1.size / SR, 1.6, 9e9) * np.clip(np.linspace(1, 0, p1.size) * 6, 0, 1) ** 0.5
-place(p1, 0.0, 0.11)
+def bed(freqs, t0, t1, gain, fade_in=1.2, fade_out=1.4, cut=1100):
+    d = t1 - t0
+    p = pad(freqs, d, cut=cut)
+    t = t_axis(d)
+    p *= np.clip(t / fade_in, 0, 1) * np.clip((d - t) / fade_out, 0, 1)
+    place(p, t0, gain)
 
-p2d = DUR - T['botDone']
-p2 = pad([261.63, 329.63, 392.0, 523.25], p2d)
-p2 *= env_ad(p2d, 0.5, 9e9) * np.clip((1 - (t_axis(p2d) - (p2d - 2.2)) / 2.2), 0, 1)
-place(p2, T['botDone'], 0.10)
+A3, C4, E4, F4, G4, A4, C5, E5, D4, B3 = 220.0, 261.63, 329.63, 349.23, 392.0, 440.0, 523.25, 659.25, 293.66, 246.94
+# S1 — светлый «магазинный» пад
+bed([C4, E4, G4, C5], 0.0, 12.9, 0.085, 1.4, 1.0, cut=1500)
+# S2-S3 — тёмный минор
+bed([A3, C4, E4], 12.6, 24.2, 0.085, 1.6, 0.8, cut=900)
+bed([A3, C4, F4], 23.8, 32.6, 0.095, 0.8, 0.8, cut=900)
+# S4 — ожидание
+bed([A3, D4, F4], 32.4, 41.8, 0.085, 1.0, 0.6, cut=800)
+# S5 — эпичный мажор
+bed([C4, G4, C5, E5], 41.5, 50.9, 0.105, 0.9, 0.5, cut=1700)
+bed([F4, A4, C5, E5], 50.5, 59.6, 0.115, 0.7, 2.6, cut=1700)
 
-# пульс сабом
-tb = 0.75
-k = 0
-while k * tb < DUR - 0.4:
-    tt = k * tb
-    amp = 0.6 if k % 2 else 1.0
-    if tt > T['botDone']: amp *= 0.65
-    puls = sine(np.linspace(72, 44, int(SR * 0.42)), 0.42) * env_exp(0.42, 0.004, 0.08)
-    place(puls, tt, 0.075 * amp)
-    if k % 2 == 1:
-        hat = hp1(noise(0.05), 7000) * env_exp(0.05, 0.001, 0.009)
-        place(hat, tt + tb / 2, 0.022, pan=0.25)
-    k += 1
+# пульс сабом: тихий в начале, плотный в тревожной части, мягкий в финале
+tb, kk = 0.75, 0
+while kk * tb < DUR - 0.5:
+    tt = kk * tb
+    amp = 0.55 if kk % 2 else 1.0
+    if tt < T['navList1']:          amp *= 0.5
+    elif tt < T['capName']:         amp *= 0.8
+    elif tt < T['botDone']:         amp *= 1.25
+    else:                           amp *= 0.9
+    place(sine(np.linspace(72, 44, int(SR * 0.42)), 0.42) * env_exp(0.42, 0.004, 0.08), tt, 0.075 * amp)
+    if kk % 2 == 1:
+        place(hp1(noise(0.05), 7000) * env_exp(0.05, 0.001, 0.009), tt + tb / 2, 0.02, pan=0.25)
+    kk += 1
 
-# ---------- события ----------
-place(msg_in(), T['msgIn'], 0.62)
+# =====================================================================
+#                             события
+# =====================================================================
+def shimmer(dur=0.9, f0=1400, n=7, up=True):
+    out = np.zeros(int(SR * dur))
+    for i in range(n):
+        f = f0 * (1.26 ** (i if up else n - i))
+        seg = sine(f, 0.35) * env_exp(0.35, 0.002, 0.055)
+        o = int(i * 0.055 * SR)
+        out[o:o + seg.size] += seg[:out.size - o] * (0.9 - 0.08 * i)
+    return out * 0.5
+
+def ding(f=1174.7, dur=1.4, bright=1.0):
+    """чистое «дзынь» с обертонами"""
+    out = np.zeros(int(SR * dur))
+    for mult, g, dcy in ((1, 1.0, 0.33), (2.01, 0.5, 0.2), (3.02, 0.26, 0.13), (5.4, 0.14, 0.08)):
+        s = sine(f * mult, dur) * env_exp(dur, 0.002, dcy)
+        out += s * g
+    air = hp1(noise(0.3), 6500) * env_exp(0.3, 0.001, 0.05) * 0.2 * bright
+    out[:air.size] += air
+    return out * 0.45
+
+def coin():
+    d = 0.7
+    out = np.zeros(int(SR * d))
+    for i, f in enumerate((1318.5, 1760.0, 2093.0)):
+        seg = sine(f, 0.5) * env_exp(0.5, 0.001, 0.1)
+        o = int(i * 0.045 * SR); out[o:o + seg.size] += seg[:out.size - o] * (0.8 - 0.2 * i)
+    return out * 0.5
+
+def swipe(dur=0.5, up=True):
+    n = noise(dur)
+    f = np.linspace(700, 2200, n.size) if up else np.linspace(1900, 600, n.size)
+    band = lp1(hp1(n, f * 0.5), f * 1.5)
+    return band * env_ad(dur, dur * 0.4, dur * 0.35) * 0.9
+
+def rumble(dur=2.2):
+    t = t_axis(dur)
+    s = sine(np.linspace(46, 33, int(SR * dur)), dur) * 0.8 + sine(np.linspace(92, 66, int(SR * dur)), dur) * 0.25
+    nz = lp1(noise(dur), 160) * 0.5
+    return (s + nz) * env_ad(dur, 0.06, dur * 0.42)
+
+def ghost_fx():
+    d = 2.6
+    out = np.zeros(int(SR * d))
+    rev = whoosh(0.9, up=False, bright=0.8) * 0.8                 # «всасывание»
+    out[:rev.size] += rev
+    sub = sine(np.linspace(90, 30, int(SR * 1.8)), 1.8) * env_exp(1.8, 0.004, 0.34)
+    out[:sub.size] += sub * 0.9
+    gl = noise(0.3); step = 380
+    gl = np.repeat(gl[::step], step)[:int(SR * 0.3)]
+    out[:gl.size] += hp1(gl, 400) * env_exp(0.3, 0.001, 0.05) * 0.5
+    sh = shimmer(0.9, 900, 7, up=False)
+    o = int(0.25 * SR); out[o:o + sh.size] += sh[:out.size - o] * 0.5
+    return out
+
+# --- S1: витрина ---
+place(swipe(0.55, up=True),  T['scrollA'] + 0.05, 0.10, pan=0.1)
+place(swipe(0.45, up=False), T['scrollB'] + 0.05, 0.08, pan=-0.1)
+place(shimmer(0.6, 1800, 5), T['hl'], 0.06)
+place(whoosh(0.38, up=True), T['sheetIn'], 0.14)                    # раскрытие карточки
+place(ding(880, 0.5), T['sheetIn'] + 0.08, 0.10)
+place(whoosh(0.3, up=True, bright=0.8), T['modalIn'], 0.11)
+place(riser(0.95), T['fly'] - 0.1, 0.13)                            # разгон полёта
+place(shimmer(0.85, 1500, 8), T['fly'] + 0.05, 0.11)
+place(ding(1567.98, 1.8, 1.2), T['avPop'], 0.40)                    # «дзынь» — подарок в профиле
+place(coin(), T['avPop'] + 0.02, 0.22)
+place(success(), T['avPop'] + 0.06, 0.16)
+
+# --- общие: тапы, переходы, клавиши ---
 for i, tt in enumerate(TAPS):
-    place(ui_tap(), tt, 0.26, pan=(-0.08 if i % 2 else 0.08))
+    place(ui_tap(), tt, 0.24, pan=(-0.08 if i % 2 else 0.08))
 for i, tt in enumerate(NAVS):
-    place(whoosh(0.36, up=(i % 2 == 1)), tt + 0.02, 0.16, pan=(0.25 if i % 2 else -0.25))
-place(whoosh(0.3, up=True, bright=0.7), T['focus'], 0.12)            # клавиатура вверх
-place(whoosh(0.3, up=False, bright=0.7), T['kbHide'], 0.09)          # клавиатура вниз
+    place(whoosh(0.36, up=(i % 2 == 1)), tt + 0.02, 0.15, pan=(0.25 if i % 2 else -0.25))
 for i, tt in enumerate(KEYS):
-    place(key_click(i), tt, 0.19, pan=(-0.12 + 0.03 * i))
-place(send_pop(), T['sendMsg'], 0.28)
-place(sine(np.linspace(900, 1300, int(SR * 0.1)), 0.1) * env_exp(0.1, 0.004, 0.02), T['botTyping'], 0.07)
+    place(key_click(i), tt, 0.14, pan=(-0.1 + 0.02 * (i % 9)))
+place(whoosh(0.3, up=True,  bright=0.7), T['kbOn'], 0.11)
+place(whoosh(0.3, up=False, bright=0.7), T['kbOff'], 0.08)
+place(whoosh(0.3, up=True,  bright=0.7), T['focusBot'], 0.11)
+place(whoosh(0.3, up=False, bright=0.7), T['kbHide'], 0.08)
+for tt in (T['sendQ'], T['sendOk'], T['sendNo'], T['sendU']):
+    place(send_pop(), tt, 0.26)
 
-# «выполняю…» — гудение и тики ровно 3 секунды
-place(drone(T['botDone'] - T['botExec'] + 0.05), T['botExec'], 0.10)
-tt = T['botExec'] + 0.18
+# --- S2: угроза ---
+place(msg_in(), T['notifIn'], 0.62)
+place(msg_in(), T['d1'], 0.40)
+place(msg_in(), T['d2'], 0.36)
+place(msg_in(), T['d3'], 0.30)
+tt = T['timerOn'] + 0.4                                             # тиканье таймера
+while tt < T['botDone']:
+    hot = 1.0 if tt > 34 else 0.6
+    place(tick(), tt, 0.055 * hot, pan=0.3)
+    tt += 1.0
+place(riser(1.3), T['capName'] - 1.3, 0.17)                         # подъём к «Но это было не моё имя»
+place(impact(), T['capName'], 0.48)
+place(rumble(2.4), T['capName'], 0.22)
+
+# --- S3: подарки-медведи ---
+for tt in (T['gift1'], T['gift2']):
+    place(ding(1046.5, 1.1), tt, 0.26)
+    place(shimmer(0.5, 1600, 4), tt + 0.05, 0.07)
+
+# --- S4: бот ---
+place(drone(T['botDone'] - T['botExec'] + 0.05), T['botExec'], 0.11)
+tt = T['botExec'] + 0.2
 while tt < T['botDone'] - 0.05:
-    place(tick(), tt, 0.075, pan=0.12)
+    place(tick(), tt, 0.07, pan=0.12)
     tt += 0.3
-place(success(), T['botDone'], 0.38)
+place(riser(0.8), T['botDone'] - 0.8, 0.12)
+place(success(), T['botDone'], 0.42)
+place(ding(1567.98, 1.6), T['botDone'] + 0.02, 0.20)
 
-# удаление аккаунта
-place(riser(1.25), T['deleted'] - 1.25, 0.22)
-place(impact(), T['deleted'], 0.85)
+# --- S5: исчезновение и финал ---
+place(ghost_fx(), T['ghost'], 0.48)
+place(ui_tap(0.8), T['delBtn'], 0.14)
+place(riser(1.5), 46.95 - 1.5, 0.16)
+for i, tt in enumerate(CAPS):                                        # мягкий акцент на субтитрах
+    place(hp1(noise(0.05), 4500) * env_exp(0.05, 0.001, 0.009), tt, 0.05, pan=-0.1)
+    if i >= 2:
+        place(ding(1046.5 * (1.12 ** (i - 2)), 1.2, 0.6), tt + 0.02, 0.10)
+place(impact(), 54.40, 0.30)
+place(success(), 57.6, 0.22)
 
-# тики субтитров
-for tt in CAPS:
-    place(hp1(noise(0.05), 4500) * env_exp(0.05, 0.001, 0.009), tt, 0.055, pan=-0.1)
-
-# ---------- мастер ----------
-fade_in  = np.clip(np.arange(N) / (0.35 * SR), 0, 1)
-fade_out = np.clip((N - np.arange(N)) / (0.55 * SR), 0, 1)
+# =====================================================================
+#                               мастер
+# =====================================================================
+fade_in  = np.clip(np.arange(N) / (0.45 * SR), 0, 1)
+fade_out = np.clip((N - np.arange(N)) / (1.1 * SR), 0, 1)
 mix *= fade_in * fade_out
-mix = np.tanh(mix * 1.25) / 1.25                 # мягкий лимитер
+mix = np.tanh(mix * 1.25) / 1.25
 peak = np.max(np.abs(mix))
 mix *= 0.92 / peak
-print('peak %.3f  rms %.4f' % (peak, float(np.sqrt(np.mean(mix ** 2)))))
+print('peak %.3f  rms %.4f  dur %.2fs' % (peak, float(np.sqrt(np.mean(mix ** 2))), DUR))
 
 data = (np.clip(mix.T, -1, 1) * 32767).astype('<i2')
 with wave.open('out/soundtrack.wav', 'wb') as w:

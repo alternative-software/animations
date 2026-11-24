@@ -2,24 +2,19 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<title>MorphSnos</title>
+<title>MorphSnos — Scared Cat</title>
 <style>
   :root{
-    --bg:#0e1621;
-    --panel:#17212b;
-    --panel2:#1d2a35;
-    --in:#182533;
-    --out:#2b5278;
-    --txt:#e9edf1;
-    --dim:#7d8e9e;
-    --accent:#51a6e8;
-    --sep:rgba(255,255,255,.055);
+    --bg:#0e1621; --panel:#17212b; --panel2:#1d2a35; --panel3:#22303c;
+    --in:#182533; --out:#2b5278; --txt:#e9edf1; --dim:#7d8e9e;
+    --accent:#51a6e8; --sep:rgba(255,255,255,.055);
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased}
   html,body{background:#000;overflow:hidden}
   body{width:400px;height:600px}
   #frame{position:relative;width:400px;height:600px;overflow:hidden;background:var(--bg);
     font-family:'Inter','Inter Display',sans-serif;color:var(--txt);letter-spacing:-.01em}
+  #shake{position:absolute;inset:0;will-change:transform}
 
   /* ---------- status bar ---------- */
   .statusbar{position:absolute;top:0;left:0;right:0;height:26px;z-index:60;
@@ -27,7 +22,6 @@
     font-size:11.5px;font-weight:600;color:#fff;background:var(--panel)}
   .sb-right{display:flex;align-items:center;gap:5px;opacity:.95}
 
-  /* ---------- screens ---------- */
   .screen{position:absolute;top:26px;left:0;width:400px;height:574px;background:var(--bg);
     overflow:hidden;will-change:transform;box-shadow:-8px 0 24px rgba(0,0,0,.45)}
   .dim{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:50}
@@ -37,8 +31,7 @@
     display:flex;align-items:center;padding:0 10px;gap:8px;z-index:20;
     border-bottom:1px solid rgba(0,0,0,.25)}
   .hvariant{position:absolute;inset:0;height:52px;display:flex;align-items:center;padding:0 10px;gap:8px}
-  .iconbtn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;
-    border-radius:50%;flex:0 0 auto}
+  .iconbtn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex:0 0 auto}
   .htitle{display:flex;flex-direction:column;justify-content:center;min-width:0;flex:1}
   .hname{font-size:14.5px;font-weight:600;line-height:1.15;white-space:nowrap}
   .hsub{font-size:11.5px;color:var(--dim);line-height:1.3;margin-top:1px;position:relative;height:14px}
@@ -46,12 +39,81 @@
   .hsub .typing{color:var(--accent)}
 
   .av{border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
-    font-weight:700;color:#fff;overflow:hidden}
+    font-weight:700;color:#fff;overflow:hidden;position:relative}
   .av-q{background:linear-gradient(145deg,#f0785a,#d2453f)}
   .av-bot{background:linear-gradient(145deg,#8e7cff,#4f46c9)}
-  .av-dead{background:#44525f}
+  .av-ghost{background:linear-gradient(160deg,#7fdc6a,#3fae63)}
+  .av-me{background:linear-gradient(150deg,#59c0ff,#2b6fd6)}
+  .av-28{width:28px;height:28px;font-size:12px}
   .av-36{width:36px;height:36px;font-size:15px}
   .av-50{width:50px;height:50px;font-size:19px}
+
+  /* ---------- gift showcase ---------- */
+  .chips{position:absolute;top:52px;left:0;right:0;height:46px;z-index:18;background:var(--bg);
+    display:flex;align-items:center;gap:7px;padding:0 10px;border-bottom:1px solid var(--sep)}
+  .chip{display:flex;align-items:center;gap:5px;height:30px;padding:0 11px;border-radius:999px;
+    background:var(--panel2);font-size:11.5px;font-weight:600;color:#cfdae4;white-space:nowrap}
+  .chip.on{background:#2b5278;color:#fff}
+  .gridwrap{position:absolute;top:98px;left:0;right:0;bottom:0;overflow:hidden}
+  #grid{position:absolute;left:0;top:0;width:400px;padding:10px;display:flex;flex-wrap:wrap;gap:7px;
+    will-change:transform}
+  .card{width:122px;height:150px;border-radius:14px;position:relative;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .card .cbg{position:absolute;inset:0}
+  .card .pat{position:absolute;inset:0;opacity:.17}
+  .card .cat{position:relative;z-index:2;will-change:transform}
+  .card .num{position:absolute;top:0;right:0;z-index:4;font-size:8px;font-weight:700;color:rgba(255,255,255,.92);
+    background:rgba(0,0,0,.26);padding:3px 5px 3px 9px;border-bottom-left-radius:9px;letter-spacing:.01em}
+  .card .price{position:absolute;left:50%;transform:translateX(-50%);bottom:9px;z-index:4;
+    display:flex;align-items:center;gap:4px;height:21px;padding:0 8px;border-radius:999px;white-space:nowrap;
+    background:rgba(0,0,0,.32);font-size:10.5px;font-weight:700;color:#fff;backdrop-filter:blur(3px)}
+  .card .glow{position:absolute;inset:0;border-radius:14px;z-index:5;opacity:0;
+    box-shadow:0 0 0 2px #63c2ff inset,0 0 18px rgba(99,194,255,.55);pointer-events:none}
+  .card .tapfl{position:absolute;inset:0;background:#fff;opacity:0;z-index:6}
+
+  /* ---------- gift detail sheet ---------- */
+  #sheet{position:absolute;z-index:46;border-radius:18px;overflow:hidden;background:var(--panel);
+    box-shadow:0 22px 60px rgba(0,0,0,.6);opacity:0;will-change:transform,opacity;
+    transform-origin:50% 50%}
+  #sheet .hero{position:relative;height:214px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  #sheet .hero .cbg,#sheet .hero .pat{position:absolute;inset:0}
+  #sheet .hero .pat{opacity:.17}
+  #sheet .body{padding:12px 14px 14px}
+  #sheet h2{font-size:16px;font-weight:700;letter-spacing:-.02em}
+  #sheet .sub{font-size:11px;color:var(--dim);margin-top:2px}
+  #sheet .attrs{margin:11px 0 12px;display:flex;flex-direction:column;gap:7px}
+  #sheet .attr{display:flex;align-items:center;justify-content:space-between;font-size:11.5px}
+  #sheet .attr .k{color:var(--dim)}
+  #sheet .attr .v{font-weight:600;display:flex;align-items:center;gap:6px}
+  #sheet .attr .pc{font-size:9.5px;font-weight:700;color:#8fb9dd;background:rgba(81,166,232,.16);
+    padding:2px 5px;border-radius:5px}
+  .btn{height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:6px;
+    font-size:14px;font-weight:700;background:var(--accent);color:#fff;box-shadow:0 4px 16px rgba(81,166,232,.3);
+    position:relative;overflow:hidden}
+  .btn .fl{position:absolute;inset:0;background:#fff;opacity:0}
+  .btn.ghostbtn{background:var(--panel3);color:#cfdae4;box-shadow:none}
+
+  /* ---------- modal ---------- */
+  #mback{position:absolute;inset:0;background:rgba(0,0,0,.55);opacity:0;z-index:50}
+  #modal{position:absolute;left:50px;top:214px;width:300px;z-index:52;background:#1c2733;border-radius:16px;
+    padding:18px 18px 14px;opacity:0;will-change:transform,opacity;
+    box-shadow:0 26px 60px rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.06)}
+  #modal h3{font-size:16.5px;font-weight:700;text-align:center;letter-spacing:-.02em}
+  #modal p{font-size:12px;color:var(--dim);text-align:center;margin-top:7px;line-height:1.45}
+  #modal .pay{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:9px;
+    font-size:15px;font-weight:800;color:#fff}
+  #modal .btns{display:flex;gap:9px;margin-top:16px}
+  #modal .btns>div{flex:1}
+
+  /* ---------- flying gift + sparks ---------- */
+  #flyer{position:absolute;width:62px;height:62px;border-radius:16px;overflow:hidden;z-index:58;opacity:0;
+    margin:-31px 0 0 -31px;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 10px 26px rgba(0,0,0,.5);will-change:transform,opacity}
+  #flyer .cbg{position:absolute;inset:0}
+  #sparks{position:absolute;inset:0;z-index:59;pointer-events:none}
+  .spark{position:absolute;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;opacity:0;will-change:transform,opacity}
+  .spark i{display:block;width:100%;height:100%;background:#ffd977;border-radius:50%;
+    box-shadow:0 0 8px rgba(255,214,120,.9)}
 
   /* ---------- chat body ---------- */
   .wall{position:absolute;top:52px;bottom:56px;left:0;right:0;overflow:hidden;
@@ -61,45 +123,70 @@
       radial-gradient(rgba(255,255,255,.028) 1px,transparent 1.2px) 0 0/22px 22px,
       var(--bg)}
   .msgs{position:absolute;left:0;right:0;bottom:0;padding:10px 12px 12px;
-    display:flex;flex-direction:column;align-items:stretch;gap:7px}
+    display:flex;flex-direction:column;align-items:stretch;gap:7px;will-change:transform}
   .pill{align-self:center;background:rgba(0,0,0,.35);color:#cfd9e2;font-size:10.5px;font-weight:500;
-    padding:4px 11px;border-radius:999px;margin:4px 0;text-align:center;max-width:280px;line-height:1.35}
+    padding:4px 11px;border-radius:999px;margin:3px 0;text-align:center;max-width:300px;line-height:1.35}
   .row{display:flex;width:100%}
   .row.me{justify-content:flex-end}
   .row.them{justify-content:flex-start}
-  .bub{max-width:264px;padding:7px 11px 8px;border-radius:14px;font-size:13.5px;line-height:1.32;
+  .bub{max-width:268px;padding:7px 11px 8px;border-radius:14px;font-size:13.5px;line-height:1.34;
     position:relative;display:flex;align-items:flex-end;gap:7px;will-change:transform,opacity;
     box-shadow:0 1px 2px rgba(0,0,0,.25)}
   .bub.them{background:var(--in);border-bottom-left-radius:5px}
   .bub.me{background:var(--out);border-bottom-right-radius:5px}
   .bub .time{font-size:9.5px;color:rgba(255,255,255,.45);flex:0 0 auto;transform:translateY(2px)}
   .bub.me .time{color:rgba(255,255,255,.6)}
+  .bub.gift{padding:7px;flex-direction:column;align-items:stretch;gap:0}
+  .giftcard{width:142px;border-radius:11px;overflow:hidden;position:relative;background:#0f1a24}
+  .giftcard .gbg{position:relative;height:104px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .giftcard .gbg .pat{position:absolute;inset:0;opacity:.16}
+  .giftcard .glab{padding:7px 8px 4px;text-align:center}
+  .giftcard .glab b{display:block;font-size:11.5px;font-weight:700}
+  .giftcard .gprice{display:inline-flex;align-items:center;gap:4px;margin-top:4px;
+    font-size:11px;font-weight:700;color:#ffd977}
+  .bub.gift .time{align-self:flex-end;margin-top:3px}
+  .giftglow{position:absolute;inset:-20px;border-radius:26px;opacity:0;
+    background:radial-gradient(circle at 50% 45%,rgba(255,214,120,.45),transparent 65%)}
   .mono{font-variant-ligatures:none}
-
   .dots{display:flex;align-items:center;gap:4px;height:16px;padding:1px 2px}
   .dots i{width:6px;height:6px;border-radius:50%;background:#8fa3b5;display:block}
 
-  .exec{display:inline-flex;align-items:center;gap:7px;position:relative}
-  .execlabel{position:relative;display:inline-block;min-width:92px;height:18px}
-  .execlabel>span{position:absolute;left:0;top:0;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  .execrow{display:flex;flex-direction:column;align-items:stretch;gap:0;min-width:168px}
+  .execline{display:flex;align-items:center;gap:7px;position:relative;height:18px}
+  .execline>span{position:absolute;left:0;top:0;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
   .spin{width:12px;height:12px;flex:0 0 auto}
   .spin circle{fill:none;stroke:rgba(255,255,255,.22);stroke-width:2}
   .spin path{fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
+  .pbar{height:4px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:8px}
+  .pbar i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,#51a6e8,#8e7cff)}
+  .pct{font-size:9.5px;color:#9fb3c4;margin-top:4px;font-variant-numeric:tabular-nums}
 
-  /* ---------- input bar ---------- */
+  /* ---------- input bar / keyboard ---------- */
+  .botbottom{position:absolute;left:0;right:0;bottom:0;height:236px;z-index:22;will-change:transform}
+  .botbottom .inputbar{position:absolute;top:0;bottom:auto}
   .inputbar{position:absolute;left:0;right:0;bottom:0;height:56px;background:var(--panel);
-    display:flex;align-items:center;gap:8px;padding:0 10px;z-index:20;
-    border-top:1px solid rgba(0,0,0,.25)}
+    display:flex;align-items:center;gap:8px;padding:0 10px;z-index:20;border-top:1px solid rgba(0,0,0,.25)}
   .field{flex:1;min-width:0;position:relative;display:flex;align-items:center;height:36px;
     border-radius:18px;background:var(--panel2);padding:0 12px;font-size:13.5px;color:var(--txt);overflow:hidden}
   .field .ph{color:#6f8294;position:absolute;left:12px;top:50%;transform:translateY(-50%)}
-  .caret{display:inline-block;width:1.5px;height:16px;background:var(--accent);margin-left:1px;
-    transform:translateY(2px)}
+  .caret{display:inline-block;width:1.5px;height:16px;background:var(--accent);margin-left:1px;transform:translateY(2px)}
   .send{width:36px;height:36px;border-radius:50%;background:var(--accent);
-    display:flex;align-items:center;justify-content:center;flex:0 0 auto;
-    box-shadow:0 2px 8px rgba(81,166,232,.35)}
-  .lockbar{position:absolute;inset:0;background:var(--panel);display:flex;align-items:center;
-    justify-content:center;gap:7px;font-size:12.5px;color:var(--dim);opacity:0}
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto;box-shadow:0 2px 8px rgba(81,166,232,.35)}
+  .delbar{position:absolute;left:0;right:0;bottom:0;height:56px;background:var(--panel);z-index:24;
+    display:flex;align-items:center;justify-content:center;opacity:0;border-top:1px solid rgba(0,0,0,.25)}
+  .delbtn{width:376px;height:44px;border-radius:22px;background:#202e3a;display:flex;align-items:center;
+    justify-content:center;font-size:15px;font-weight:700;color:#9fb0bd;position:relative;overflow:hidden;
+    border:1px solid rgba(255,255,255,.05)}
+  .delbtn .fl{position:absolute;inset:0;background:#fff;opacity:0}
+  .kb{position:absolute;top:56px;left:0;right:0;height:180px;background:#1b2530;padding:7px 3px 10px;
+    display:flex;flex-direction:column;gap:7px;border-top:1px solid rgba(0,0,0,.35)}
+  .kblayer{position:absolute;inset:0;padding:7px 3px 10px;display:flex;flex-direction:column;gap:7px}
+  .krow{display:flex;gap:4px;justify-content:center;flex:1;padding:0 3px}
+  .key{flex:1;display:flex;align-items:center;justify-content:center;background:#3a4854;border-radius:6px;
+    font-size:14px;font-weight:500;color:#eef3f7;box-shadow:0 1px 0 rgba(0,0,0,.45);position:relative}
+  .key.fn{background:#2b3843;font-size:11px;color:#c6d3de;flex:0 0 38px}
+  .key.sp{flex:4}
+  .key .fl{position:absolute;inset:0;border-radius:6px;background:#5a6e7e;opacity:0}
 
   /* ---------- chat list ---------- */
   .listhead{position:absolute;top:0;left:0;right:0;height:52px;background:var(--panel);
@@ -114,7 +201,7 @@
   .lname{font-size:14.5px;font-weight:600;white-space:nowrap}
   .badge{font-size:8.5px;font-weight:700;letter-spacing:.04em;background:#51a6e8;color:#0e1621;
     padding:1.5px 4px;border-radius:4px;transform:translateY(-.5px)}
-  .lmsg{font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+  .lmsg{font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;max-width:230px}
   .lright{display:flex;flex-direction:column;align-items:flex-end;gap:5px;position:relative;z-index:2}
   .ltime{font-size:10.5px;color:#6f8294}
   .unread{min-width:19px;height:19px;border-radius:999px;background:var(--accent);color:#0e1621;
@@ -122,277 +209,127 @@
   .sepline{position:absolute;left:75px;right:0;bottom:0;height:1px;background:var(--sep)}
   .avwrap{position:relative;z-index:2}
 
-  /* ---------- keyboard ---------- */
-  .botbottom{position:absolute;left:0;right:0;bottom:0;height:236px;z-index:20;will-change:transform}
-  .botbottom .inputbar{position:absolute;top:0;bottom:auto}
-  .kb{position:absolute;top:56px;left:0;right:0;height:180px;background:#1b2530;padding:7px 3px 10px;
-    display:flex;flex-direction:column;gap:7px;border-top:1px solid rgba(0,0,0,.35)}
-  .kblayer{position:absolute;inset:0;padding:7px 3px 10px;display:flex;flex-direction:column;gap:7px}
-  .krow{display:flex;gap:5px;justify-content:center;flex:1;padding:0 3px}
-  .key{flex:1;display:flex;align-items:center;justify-content:center;background:#3a4854;border-radius:6px;
-    font-size:15px;font-weight:500;color:#eef3f7;box-shadow:0 1px 0 rgba(0,0,0,.45);position:relative}
-  .key.fn{background:#2b3843;font-size:11.5px;color:#c6d3de;flex:0 0 42px}
-  .key.sp{flex:4}
-  .key .fl{position:absolute;inset:0;border-radius:6px;background:#5a6e7e;opacity:0}
-  .key .pop{position:absolute;left:50%;bottom:100%;transform:translate(-50%,-4px) scale(.7);
-    background:#5f7384;border-radius:7px;padding:6px 11px;font-size:19px;opacity:0;box-shadow:0 4px 10px rgba(0,0,0,.45)}
+  /* ---------- notification banner ---------- */
+  #notif{position:absolute;left:10px;top:30px;width:380px;z-index:70;border-radius:16px;padding:10px 12px;
+    background:rgba(32,44,56,.94);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);
+    box-shadow:0 16px 36px rgba(0,0,0,.55);display:flex;gap:10px;opacity:0;will-change:transform,opacity}
+  #notif .ntxt{min-width:0;flex:1}
+  #notif .nn{font-size:12.5px;font-weight:700;display:flex;justify-content:space-between;gap:8px}
+  #notif .nn i{font-style:normal;font-size:10px;color:#7d8e9e;font-weight:600}
+  #notif .nb{font-size:11.5px;color:#c3d0da;margin-top:3px;line-height:1.35;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+  /* ---------- countdown timer ---------- */
+  #timer{position:absolute;right:14px;top:112px;width:62px;height:62px;z-index:44;opacity:0;will-change:transform,opacity}
+  #timer svg{position:absolute;inset:0}
+  #timer .tnum{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:800;color:#ff8373;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+  #timer .tglow{position:absolute;inset:-8px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,80,60,.4),transparent 68%);opacity:0}
 
   /* ---------- subtitles ---------- */
   #capwrap{position:absolute;inset:0;z-index:92;pointer-events:none}
-  .capblock{position:absolute;left:50%;width:348px;margin-left:-174px;text-align:center;
-    font-family:'Inter Display','Inter',sans-serif;font-weight:800;font-size:22.5px;line-height:1.3;
+  .capblock{position:absolute;left:50%;width:352px;margin-left:-176px;text-align:center;
+    font-family:'Inter Display','Inter',sans-serif;font-weight:800;font-size:22px;line-height:1.3;
     letter-spacing:-.022em;color:#fff;padding:13px 16px 19px;border-radius:19px;
     background:rgba(8,13,19,.56);border:1px solid rgba(255,255,255,.075);
     backdrop-filter:blur(7px) saturate(1.2);
     box-shadow:0 14px 38px rgba(0,0,0,.5),0 2px 0 rgba(255,255,255,.04) inset;
     text-shadow:0 2px 12px rgba(0,0,0,.65);opacity:0;will-change:transform,opacity}
+  .capblock.big{font-size:26px;font-weight:900;letter-spacing:-.03em}
   .capblock .w{display:inline-block;margin:0 3.5px;will-change:transform,opacity}
   .capblock .acc{color:#63c2ff;text-shadow:0 0 18px rgba(81,166,232,.45),0 2px 12px rgba(0,0,0,.65)}
   .capblock .dang{color:#ff8373;text-shadow:0 0 18px rgba(255,105,85,.4),0 2px 12px rgba(0,0,0,.65)}
   .capblock .ok{color:#79e09a;text-shadow:0 0 18px rgba(110,220,145,.4),0 2px 12px rgba(0,0,0,.65)}
+  .capblock .gold{color:#ffd977;text-shadow:0 0 18px rgba(255,200,90,.45),0 2px 12px rgba(0,0,0,.65)}
   .capblock .bar{position:absolute;left:16px;right:16px;bottom:7px;height:2px;border-radius:2px;
     background:rgba(255,255,255,.1);overflow:hidden}
-  .capblock .bar i{display:block;height:100%;width:0;border-radius:2px;
-    background:linear-gradient(90deg,#51a6e8,#8e7cff)}
+  .capblock .bar i{display:block;height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,#51a6e8,#8e7cff)}
 
-  /* ---------- pointer / fx ---------- */
+  /* ---------- fx ---------- */
   #ptr{position:absolute;width:42px;height:42px;border-radius:50%;z-index:90;opacity:0;
     margin:-21px 0 0 -21px;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.34),rgba(255,255,255,.16) 62%,rgba(255,255,255,.04) 100%);
     border:1.5px solid rgba(255,255,255,.55);backdrop-filter:blur(1px)}
   #ripple{position:absolute;width:40px;height:40px;border-radius:50%;z-index:89;opacity:0;
     margin:-20px 0 0 -20px;border:2px solid rgba(255,255,255,.85)}
+  #vign{position:absolute;inset:0;z-index:86;pointer-events:none;opacity:0;
+    box-shadow:inset 0 0 90px 10px rgba(220,40,30,.85)}
+  #aura{position:absolute;inset:0;z-index:85;pointer-events:none;opacity:0;
+    box-shadow:inset 0 0 70px 6px rgba(90,200,255,.5),inset 0 0 180px 30px rgba(60,120,220,.25)}
   #flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:95;pointer-events:none}
   #fade{position:absolute;inset:0;background:#000;opacity:0;z-index:98;pointer-events:none}
 </style>
 </head>
 <body>
 <div id="frame">
-
-  <div class="statusbar">
-    <div id="clock">21:04</div>
-    <div class="sb-right">
-      <svg width="15" height="11" viewBox="0 0 15 11"><g fill="#fff"><rect x="0" y="7.5" width="2.4" height="3.5" rx=".6"/><rect x="3.8" y="5.5" width="2.4" height="5.5" rx=".6"/><rect x="7.6" y="3" width="2.4" height="8" rx=".6"/><rect x="11.4" y="0" width="2.4" height="11" rx=".6" opacity=".4"/></g></svg>
-      <svg width="14" height="11" viewBox="0 0 14 11"><path d="M7 9.6 1 3.9A8.4 8.4 0 0 1 13 3.9L7 9.6Z" fill="none" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" opacity=".95"/></svg>
-      <svg width="22" height="11" viewBox="0 0 22 11"><rect x=".7" y=".7" width="17.6" height="9.6" rx="2.6" fill="none" stroke="#fff" stroke-width="1.2" opacity=".6"/><rect x="2.4" y="2.4" width="11.5" height="6.2" rx="1.4" fill="#fff"/><path d="M20 4v3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".6"/></svg>
+  <div id="shake">
+    <div class="statusbar">
+      <div id="clock">21:02</div>
+      <div class="sb-right">
+        <svg width="15" height="11" viewBox="0 0 15 11"><g fill="#fff"><rect x="0" y="7.5" width="2.4" height="3.5" rx=".6"/><rect x="3.8" y="5.5" width="2.4" height="5.5" rx=".6"/><rect x="7.6" y="3" width="2.4" height="8" rx=".6"/><rect x="11.4" y="0" width="2.4" height="11" rx=".6" opacity=".4"/></g></svg>
+        <svg width="14" height="11" viewBox="0 0 14 11"><path d="M7 9.6 1 3.9A8.4 8.4 0 0 1 13 3.9L7 9.6Z" fill="none" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" opacity=".95"/></svg>
+        <svg width="22" height="11" viewBox="0 0 22 11"><rect x=".7" y=".7" width="17.6" height="9.6" rx="2.6" fill="none" stroke="#fff" stroke-width="1.2" opacity=".6"/><rect x="2.4" y="2.4" width="11.5" height="6.2" rx="1.4" fill="#fff"/><path d="M20 4v3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".6"/></svg>
+      </div>
     </div>
+    <div id="screens"></div>
+    <div id="timer"></div>
+    <div id="notif"></div>
+    <div id="mback"></div>
+    <div id="modal"></div>
+    <div id="sheet"></div>
+    <div id="flyer"></div>
+    <div id="sparks"></div>
   </div>
-
-  <!-- ===================== CHAT LIST ===================== -->
-  <div class="screen" id="sc_list">
-    <div class="listhead">
-      <h1>Чаты</h1>
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#8fa3b5" stroke-width="1.7" stroke-linecap="round"><circle cx="7.6" cy="7.6" r="5.4"/><path d="M11.6 11.6 16 16"/></svg>
-    </div>
-    <div class="rows">
-
-      <div class="lrow" id="row_doxer">
-        <div class="hl"></div>
-        <div class="avwrap"><div class="av av-q av-50" id="row_dox_av">?</div></div>
-        <div class="meta">
-          <div class="top"><div class="lname" id="row_dox_name">Незнакомец</div></div>
-          <div class="lmsg" id="row_dox_msg">жди докс</div>
-        </div>
-        <div class="lright">
-          <div class="ltime">21:04</div>
-          <div class="unread" id="row_dox_unread">1</div>
-        </div>
-        <div class="sepline"></div>
-      </div>
-
-      <div class="lrow" id="row_bot">
-        <div class="hl"></div>
-        <div class="avwrap"><div class="av av-bot av-50">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7.5" width="16" height="12" rx="4"/><path d="M12 7.5V4.2"/><circle cx="12" cy="3.2" r="1.3" fill="#fff" stroke="none"/><circle cx="9.2" cy="13" r="1.35" fill="#fff" stroke="none"/><circle cx="14.8" cy="13" r="1.35" fill="#fff" stroke="none"/><path d="M9.6 16.6h4.8"/></svg>
-        </div></div>
-        <div class="meta">
-          <div class="top"><div class="lname">MorphSnos</div><div class="badge">BOT</div></div>
-          <div class="lmsg">Отправьте @username цели</div>
-        </div>
-        <div class="lright"><div class="ltime">20:51</div></div>
-        <div class="sepline"></div>
-      </div>
-
-      <div class="lrow">
-        <div class="hl"></div>
-        <div class="avwrap"><div class="av av-50" style="background:linear-gradient(145deg,#f58fb4,#c7467d)">А</div></div>
-        <div class="meta"><div class="top"><div class="lname">Аня</div></div>
-        <div class="lmsg">ок, завтра созвонимся</div></div>
-        <div class="lright"><div class="ltime">19:20</div></div>
-        <div class="sepline"></div>
-      </div>
-
-      <div class="lrow">
-        <div class="hl"></div>
-        <div class="avwrap"><div class="av av-50" style="background:linear-gradient(145deg,#6fd48a,#2f9e63)">П</div></div>
-        <div class="meta"><div class="top"><div class="lname">Проект</div></div>
-        <div class="lmsg">Макс: закинул макеты в папку</div></div>
-        <div class="lright"><div class="ltime">18:44</div></div>
-        <div class="sepline"></div>
-      </div>
-
-      <div class="lrow">
-        <div class="hl"></div>
-        <div class="avwrap"><div class="av av-50" style="background:linear-gradient(145deg,#5fb8f0,#2f72c4)">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linejoin="round"><path d="M6.5 4h11v16l-5.5-4.2L6.5 20V4Z"/></svg>
-        </div></div>
-        <div class="meta"><div class="top"><div class="lname">Избранное</div></div>
-        <div class="lmsg">ссылка на документ</div></div>
-        <div class="lright"><div class="ltime">11:02</div></div>
-        <div class="sepline"></div>
-      </div>
-
-    </div>
-    <div class="dim" id="dim_list"></div>
-  </div>
-
-  <!-- ===================== CHAT: DOXER ===================== -->
-  <div class="screen" id="sc_dox">
-    <div class="header">
-      <div class="hvariant" id="hdr_alive">
-        <div class="iconbtn" id="dox_back">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#9fb3c4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4.5 6.5 10l6 5.5"/></svg>
-        </div>
-        <div class="av av-q av-36">?</div>
-        <div class="htitle">
-          <div class="hname">Незнакомец</div>
-          <div class="hsub">
-            <span id="dox_seen">был(а) недавно</span>
-            <span class="typing" id="dox_typing" style="opacity:0">печатает…</span>
-          </div>
-        </div>
-      </div>
-      <div class="hvariant" id="hdr_dead" style="opacity:0">
-        <div class="iconbtn">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#9fb3c4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4.5 6.5 10l6 5.5"/></svg>
-        </div>
-        <div class="av av-dead av-36">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9aa9b6" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8.4" r="3.6"/><path d="M5.4 19.2c.6-3.5 3.4-5.4 6.6-5.4s6 1.9 6.6 5.4"/></svg>
-        </div>
-        <div class="htitle">
-          <div class="hname" style="color:#aebecb">Удалённый аккаунт</div>
-          <div class="hsub"><span style="color:#5e7081">аккаунт удалён</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="wall">
-      <div class="msgs" id="dox_msgs">
-        <div class="pill">Сегодня</div>
-        <div class="row me"><div class="bub me">ты кто?<span class="time">21:03</span></div></div>
-        <div class="row them" id="dox_typebub"><div class="bub them"><span class="dots"><i></i><i></i><i></i></span></div></div>
-        <div class="row them" id="dox_msg"><div class="bub them" id="dox_msg_b">жди докс<span class="time">21:04</span></div></div>
-        <div class="pill" id="dox_service" style="opacity:0">Аккаунт удалён</div>
-      </div>
-    </div>
-
-    <div class="inputbar">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7d8e9e" stroke-width="1.8" stroke-linecap="round"><path d="M14.5 6.5 8 13a3 3 0 0 0 4.2 4.2l7-7a4.5 4.5 0 0 0-6.4-6.4l-7.2 7.2a6.5 6.5 0 0 0 9.2 9.2L19 16"/></svg>
-      <div class="field"><span class="ph">Сообщение</span></div>
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7d8e9e" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.2c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><circle cx="9.2" cy="9.8" r=".9" fill="#7d8e9e" stroke="none"/><circle cx="14.8" cy="9.8" r=".9" fill="#7d8e9e" stroke="none"/></svg>
-      <div class="lockbar" id="dox_lock">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7d8e9e" stroke-width="2" stroke-linecap="round"><rect x="4.5" y="10.5" width="15" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
-        <span>Вы не можете писать в этот чат</span>
-      </div>
-    </div>
-    <div class="dim" id="dim_dox"></div>
-  </div>
-
-  <!-- ===================== CHAT: BOT ===================== -->
-  <div class="screen" id="sc_bot">
-    <div class="header">
-      <div class="hvariant">
-        <div class="iconbtn" id="bot_back">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#9fb3c4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4.5 6.5 10l6 5.5"/></svg>
-        </div>
-        <div class="av av-bot av-36">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7.5" width="16" height="12" rx="4"/><path d="M12 7.5V4.2"/><circle cx="12" cy="3.2" r="1.3" fill="#fff" stroke="none"/><circle cx="9.2" cy="13" r="1.35" fill="#fff" stroke="none"/><circle cx="14.8" cy="13" r="1.35" fill="#fff" stroke="none"/><path d="M9.6 16.6h4.8"/></svg>
-        </div>
-        <div class="htitle">
-          <div class="hname">MorphSnos</div>
-          <div class="hsub"><span id="bot_sub">бот</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="wall" id="bot_wall">
-      <div class="msgs" id="bot_msgs">
-        <div class="pill">Сегодня</div>
-        <div class="row them"><div class="bub them">Привет. Отправьте @username цели.<span class="time">20:51</span></div></div>
-        <div class="row me" id="bot_usermsg"><div class="bub me"><span class="mono">@doxer123</span><span class="time">21:05</span></div></div>
-        <div class="row them" id="bot_typebub"><div class="bub them"><span class="dots"><i></i><i></i><i></i></span></div></div>
-        <div class="row them" id="bot_status">
-          <div class="bub them" id="bot_status_b">
-            <span class="exec"><span class="execlabel">
-              <span id="lbl_exec"><svg class="spin" id="spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 9 9"/></svg><span id="exectext">выполняю</span></span>
-              <span id="lbl_done" style="opacity:0"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6fd48a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"/></svg><span style="color:#cfe9d6">готово</span></span>
-            </span></span>
-            <span class="time" id="bot_status_time">21:05</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="botbottom" id="botbottom">
-      <div class="inputbar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7d8e9e" stroke-width="1.8" stroke-linecap="round"><path d="M14.5 6.5 8 13a3 3 0 0 0 4.2 4.2l7-7a4.5 4.5 0 0 0-6.4-6.4l-7.2 7.2a6.5 6.5 0 0 0 9.2 9.2L19 16"/></svg>
-        <div class="field"><span id="bot_ph" class="ph">Сообщение</span><span class="mono" id="bot_typed"></span><span class="caret" id="bot_caret" style="opacity:0"></span></div>
-        <div class="send" id="bot_send">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="#0e1621"><path d="M3.4 11.3 20 4.2c.9-.4 1.8.5 1.4 1.4l-7.1 16.6c-.4.9-1.7.8-2-.2l-1.9-6-6-1.9c-1-.3-1.1-1.6-.2-2Z"/></svg>
-        </div>
-      </div>
-      <div class="kb"><div class="kblayer" id="kb_abc"><div class="krow"><div class="key" data-ch="q"><span class="fl"></span><span class="pop">q</span>q</div><div class="key" data-ch="w"><span class="fl"></span><span class="pop">w</span>w</div><div class="key" data-ch="e"><span class="fl"></span><span class="pop">e</span>e</div><div class="key" data-ch="r"><span class="fl"></span><span class="pop">r</span>r</div><div class="key" data-ch="t"><span class="fl"></span><span class="pop">t</span>t</div><div class="key" data-ch="y"><span class="fl"></span><span class="pop">y</span>y</div><div class="key" data-ch="u"><span class="fl"></span><span class="pop">u</span>u</div><div class="key" data-ch="i"><span class="fl"></span><span class="pop">i</span>i</div><div class="key" data-ch="o"><span class="fl"></span><span class="pop">o</span>o</div><div class="key" data-ch="p"><span class="fl"></span><span class="pop">p</span>p</div></div><div class="krow" style="padding:0 20px"><div class="key" data-ch="a"><span class="fl"></span><span class="pop">a</span>a</div><div class="key" data-ch="s"><span class="fl"></span><span class="pop">s</span>s</div><div class="key" data-ch="d"><span class="fl"></span><span class="pop">d</span>d</div><div class="key" data-ch="f"><span class="fl"></span><span class="pop">f</span>f</div><div class="key" data-ch="g"><span class="fl"></span><span class="pop">g</span>g</div><div class="key" data-ch="h"><span class="fl"></span><span class="pop">h</span>h</div><div class="key" data-ch="j"><span class="fl"></span><span class="pop">j</span>j</div><div class="key" data-ch="k"><span class="fl"></span><span class="pop">k</span>k</div><div class="key" data-ch="l"><span class="fl"></span><span class="pop">l</span>l</div></div><div class="krow"><div class="key fn">⇧</div><div class="key" data-ch="z"><span class="fl"></span><span class="pop">z</span>z</div><div class="key" data-ch="x"><span class="fl"></span><span class="pop">x</span>x</div><div class="key" data-ch="c"><span class="fl"></span><span class="pop">c</span>c</div><div class="key" data-ch="v"><span class="fl"></span><span class="pop">v</span>v</div><div class="key" data-ch="b"><span class="fl"></span><span class="pop">b</span>b</div><div class="key" data-ch="n"><span class="fl"></span><span class="pop">n</span>n</div><div class="key" data-ch="m"><span class="fl"></span><span class="pop">m</span>m</div><div class="key fn">⌫</div></div><div class="krow"><div class="key fn">?123</div><div class="key" data-ch="@" style="flex:0 0 46px"><span class="fl"></span><span class="pop">@</span>@</div><div class="key sp"></div><div class="key" data-ch="." style="flex:0 0 40px"><span class="fl"></span><span class="pop">.</span>.</div><div class="key fn">⏎</div></div></div><div class="kblayer" id="kb_123" style="opacity:0"><div class="krow"><div class="key" data-ch="1"><span class="fl"></span><span class="pop">1</span>1</div><div class="key" data-ch="2"><span class="fl"></span><span class="pop">2</span>2</div><div class="key" data-ch="3"><span class="fl"></span><span class="pop">3</span>3</div><div class="key" data-ch="4"><span class="fl"></span><span class="pop">4</span>4</div><div class="key" data-ch="5"><span class="fl"></span><span class="pop">5</span>5</div><div class="key" data-ch="6"><span class="fl"></span><span class="pop">6</span>6</div><div class="key" data-ch="7"><span class="fl"></span><span class="pop">7</span>7</div><div class="key" data-ch="8"><span class="fl"></span><span class="pop">8</span>8</div><div class="key" data-ch="9"><span class="fl"></span><span class="pop">9</span>9</div><div class="key" data-ch="0"><span class="fl"></span><span class="pop">0</span>0</div></div><div class="krow"><div class="key" data-ch="-"><span class="fl"></span><span class="pop">-</span>-</div><div class="key" data-ch="/"><span class="fl"></span><span class="pop">/</span>/</div><div class="key" data-ch=":"><span class="fl"></span><span class="pop">:</span>:</div><div class="key" data-ch=";"><span class="fl"></span><span class="pop">;</span>;</div><div class="key" data-ch="("><span class="fl"></span><span class="pop">(</span>(</div><div class="key" data-ch=")"><span class="fl"></span><span class="pop">)</span>)</div><div class="key" data-ch="$"><span class="fl"></span><span class="pop">$</span>$</div><div class="key" data-ch="&"><span class="fl"></span><span class="pop">&</span>&</div><div class="key" data-ch="""><span class="fl"></span><span class="pop">"</span>"</div></div><div class="krow"><div class="key fn">#+=</div><div class="key" data-ch="."><span class="fl"></span><span class="pop">.</span>.</div><div class="key" data-ch=","><span class="fl"></span><span class="pop">,</span>,</div><div class="key" data-ch="?"><span class="fl"></span><span class="pop">?</span>?</div><div class="key" data-ch="!"><span class="fl"></span><span class="pop">!</span>!</div><div class="key" data-ch="'"><span class="fl"></span><span class="pop">'</span>'</div><div class="key fn">⌫</div></div><div class="krow"><div class="key fn">ABC</div><div class="key" data-ch="@" style="flex:0 0 46px"><span class="fl"></span><span class="pop">@</span>@</div><div class="key sp"></div><div class="key fn">⏎</div></div></div></div>
-    </div>
-    <div class="dim" id="dim_bot"></div>
-  </div>
-
   <div id="capwrap"></div>
   <div id="ripple"></div>
   <div id="ptr"></div>
+  <div id="aura"></div>
+  <div id="vign"></div>
   <div id="flash"></div>
   <div id="fade"></div>
 </div>
-
 <script>
+/* ===================================================================
+   MorphSnos — 5 сцен. Вся анимация — чистая функция window.__render(t).
+   =================================================================== */
+
 /* ======================= timeline (seconds) ======================= */
 const T = {
-  typing:    1.00,   // "печатает…" в чате с доксером
-  msgIn:     2.30,   // приходит «жди докс»
-  tapBack1:  3.90,   // тап по стрелке назад
-  nav1:      4.00,   // → список чатов
-  tapBot:    5.30,   // тап по боту
-  nav2:      5.42,   // → чат с ботом
-  focus:     6.30,   // фокус в поле ввода
-  typeA:     6.60, typeB: 8.35,   // печать @doxer123
-  tapSend:   8.85,
-  sendMsg:   8.95,   // уходит сообщение
-  botTyping: 9.45,
-  botExec:  10.10,   // «выполняю…»
-  kbHide:    9.30,
-  botDone:  13.10,   // ровно +3.00 с → «готово»
-  tapBack2: 14.60,
-  nav3:     14.70,   // → список чатов
-  tapDox:   15.95,
-  nav4:     16.05,   // → чат с доксером
-  deleted:  17.40,   // профиль → удалённый аккаунт
-  END:      20.60
+  /* --- S1: витрина NFT-подарков --- */
+  scrollA:0.90, scrollAe:2.05, scrollB:2.45, scrollBe:3.25,
+  hl:3.45, tapCat:4.35, sheetIn:4.45,
+  tapBuy:6.30, modalIn:6.45, tapYes:7.55, modalOut:7.65,
+  fly:7.95, flyEnd:8.95, avPop:8.92,
+  /* --- S2: таймер и входящее --- */
+  navList1:12.50, timerOn:12.95, notifIn:13.60, tapNotif:14.55, navDox1:14.75,
+  d1type:15.30, d1:16.10,
+  kbOn:17.15, qA:17.35, qB:18.25, sendQ:18.60,
+  d2type:19.05, d2:19.85,
+  capName:20.40, shake:20.40,
+  /* --- S3: переписка --- */
+  okA:24.60, okB:25.90, sendOk:26.20,
+  d3type:26.65, d3:27.25,
+  noA:27.85, noB:29.25, sendNo:29.55, kbOff:29.90,
+  d4type:30.15, gift1:30.80, gift2:31.55,
+  /* --- S4: бот MorphSnos --- */
+  tapBack1:32.90, navList2:33.02, tapBot:34.10, navBot:34.22,
+  focusBot:34.95, uA:35.25, uB:36.95, tapSend:37.35, sendU:37.45,
+  kbHide:37.80, botTyping:37.95, botExec:38.60, botDone:41.60,
+  /* --- S5: возврат и исчезновение --- */
+  tapBack2:43.10, navList3:43.22, tapDox:44.30, navDox2:44.42,
+  ghost:45.20, nameChg:45.70, delBtn:46.40, aura:45.60,
+  END:59.60
 };
 const NAVDUR = 0.44;
-
 const NAV = [
-  {t:T.nav1, from:'dox',  to:'list', dir:'pop'},
-  {t:T.nav2, from:'list', to:'bot',  dir:'push'},
-  {t:T.nav3, from:'bot',  to:'list', dir:'pop'},
-  {t:T.nav4, from:'list', to:'dox',  dir:'push'}
+  {t:T.navList1, from:'gift', to:'list', dir:'pop'},
+  {t:T.navDox1,  from:'list', to:'dox',  dir:'push'},
+  {t:T.navList2, from:'dox',  to:'list', dir:'pop'},
+  {t:T.navBot,   from:'list', to:'bot',  dir:'push'},
+  {t:T.navList3, from:'bot',  to:'list', dir:'pop'},
+  {t:T.navDox2,  from:'list', to:'dox',  dir:'push'}
 ];
-const START_SCREEN = 'dox';
-
-const TAPS = [
-  {t:T.tapBack1, x:27,  y:52,  hold:'dox_back'},
-  {t:T.tapBot,   x:300, y:183, hold:'row_bot'},
-  {t:T.tapSend,  x:372, y:392, hold:null},
-  {t:T.tapBack2, x:27,  y:52,  hold:'bot_back'},
-  {t:T.tapDox,   x:300, y:113, hold:'row_doxer'}
-];
+const START_SCREEN='gift';
 
 /* ======================= helpers ======================= */
 const $=id=>document.getElementById(id);
@@ -404,178 +341,707 @@ const eOut4=p=>1-Math.pow(1-p,4);
 const eInOut=p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
 const eBack=p=>{const c=1.6;return 1+(c+1)*Math.pow(p-1,3)+c*Math.pow(p-1,2)};
 const set=(el,o)=>{for(const key in o)el.style[key]=o[key]};
+const rnd=s=>{let x=Math.sin(s*127.1+311.7)*43758.5453;return x-Math.floor(x)};
 
-const SC={list:$('sc_list'),dox:$('sc_dox'),bot:$('sc_bot')};
-const FLASHES=[...document.querySelectorAll('.key .fl')];
-const KEYMAP={};
-document.querySelectorAll('.key[data-ch]').forEach(el=>{
-  const c=el.dataset.ch;
-  (KEYMAP[c]=KEYMAP[c]||[]).push(el.querySelector('.fl'));
-});
-const DIM={list:$('dim_list'),dox:$('dim_dox'),bot:$('dim_bot')};
+/* ======================= art ======================= */
+let UID=0;
+const GHOST_D='M50 6C72 6 86 24 86 48L86 86C86 93 79 95 74 89L68 82C65 78 59 78 56 82L52 87C49 91 43 91 40 87L36 82C33 78 27 78 24 82L18 89C13 95 6 93 6 86L6 48C6 24 28 6 50 6Z';
+const BODY_D='M24 68C20 46 29 29 46 23C58 18 73 13 85 24C95 33 98 48 98 66L98 72C98 76 93 78 87 78L34 78C27 78 24 74 24 68Z';
+const STAR_D='M12 1.9 15.1 8.5 22.3 9.5 17.1 14.6 18.4 21.8 12 18.4 5.6 21.8 6.9 14.6 1.7 9.5 8.9 8.5Z';
 
-/* появление пузыря: scale + fade + подъём */
-function bubbleIn(rowEl,t,t0){
-  const p=k(t,t0,t0+0.34), e=eBack(p);
-  const b=rowEl.firstElementChild;
-  set(rowEl,{opacity:p<=0?'0':String(clamp(k(t,t0,t0+0.18)))});
-  set(b,{transform:`translateY(${lerp(10,0,eOut(p)).toFixed(2)}px) scale(${lerp(.86,1,e).toFixed(4)})`,
-         transformOrigin: rowEl.classList.contains('me')?'100% 100%':'0% 100%'});
-  set(rowEl,{display:t<t0?'none':'flex'});
+const star=(s,c)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="flex:0 0 auto"><path d="${STAR_D}" fill="${c||'#fff'}"/></svg>`;
+
+function catSVG(c,size,extra){
+  const g='cg'+(UID++), cp='cc'+UID;
+  let pat='';
+  if(c.pat==='stripes') pat=`<g stroke="${c.ac}" stroke-width="5.5" stroke-linecap="round" fill="none" opacity=".55">
+      <path d="M46 24C42 40 42 56 46 74"/><path d="M60 21C56 40 56 58 60 76"/><path d="M74 25C71 42 71 58 74 76"/></g>`;
+  if(c.pat==='spots') pat=`<g fill="${c.ac}" opacity=".62">
+      <ellipse cx="47" cy="36" rx="5.4" ry="4.2"/><ellipse cx="63" cy="29" rx="6" ry="4.6"/>
+      <ellipse cx="78" cy="41" rx="5" ry="4"/><ellipse cx="57" cy="51" rx="5.6" ry="4.3"/>
+      <ellipse cx="74" cy="60" rx="4.6" ry="3.6"/><ellipse cx="42" cy="56" rx="4.4" ry="3.4"/></g>`;
+  if(c.pat==='poly') pat=`<g stroke="${c.ac}" stroke-width="2.2" fill="none" opacity=".7">
+      <path d="M30 34 58 20 88 44 60 60Z"/><path d="M30 60 60 60 72 78 34 76Z"/><path d="M58 20 60 60"/></g>`;
+  return `<svg class="cat" width="${size}" height="${size*112/124}" viewBox="0 0 124 112" ${extra||''}>
+    <defs><linearGradient id="${g}" x1="0" y1="0" x2=".3" y2="1">
+      <stop offset="0" stop-color="${c.b1}"/><stop offset="1" stop-color="${c.b2}"/></linearGradient>
+      <clipPath id="${cp}"><path d="${BODY_D}"/></clipPath></defs>
+    <g fill="url(#${g})">
+      <path d="M96 58C119 53 122 24 105 11" fill="none" stroke="url(#${g})" stroke-width="12" stroke-linecap="round"/>
+      <path d="M9 40 12 13 33 29Z"/><path d="M34 28 50 12 52 37Z"/>
+      <rect x="16" y="58" width="9.5" height="40" rx="4.75"/><rect x="31" y="60" width="9.5" height="38" rx="4.75"/>
+      <rect x="72" y="58" width="9.5" height="40" rx="4.75"/><rect x="86" y="56" width="9.5" height="42" rx="4.75"/>
+      <path d="${BODY_D}"/><ellipse cx="29" cy="50" rx="21" ry="19"/>
+    </g>
+    <g clip-path="url(#${cp})">${pat}</g>
+    <ellipse cx="20" cy="49" rx="7.6" ry="8.9" fill="${c.eye}"/><ellipse cx="38" cy="49" rx="7.6" ry="8.9" fill="${c.eye}"/>
+    <ellipse cx="20.6" cy="50" rx="3.1" ry="5.4" fill="#141d26"/><ellipse cx="38.6" cy="50" rx="3.1" ry="5.4" fill="#141d26"/>
+    <circle cx="18.4" cy="45.6" r="1.6" fill="#fff" opacity=".9"/><circle cx="36.4" cy="45.6" r="1.6" fill="#fff" opacity=".9"/>
+    <path d="M26.4 61.5 31.6 61.5 29 64.6Z" fill="#1b1222" opacity=".6"/>
+  </svg>`;
 }
-function hideRow(rowEl){set(rowEl,{display:'none',opacity:'0'})}
+function patSVG(color){
+  const id='pt'+(UID++);
+  return `<svg class="pat" width="100%" height="100%" preserveAspectRatio="none">
+    <defs><pattern id="${id}" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(-10) scale(.9)">
+      <g fill="${color}"><path d="${GHOST_D}" transform="translate(2 2) scale(.2)"/>
+      <path d="${STAR_D}" transform="translate(24 22) scale(.55)"/></g></pattern></defs>
+    <rect width="100%" height="100%" fill="url(#${id})"/></svg>`;
+}
+function bearSVG(size,b1,b2){
+  const g='bg'+(UID++);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100">
+    <defs><linearGradient id="${g}" x1="0" y1="0" x2=".2" y2="1">
+      <stop offset="0" stop-color="${b1}"/><stop offset="1" stop-color="${b2}"/></linearGradient></defs>
+    <g fill="url(#${g})">
+      <circle cx="22" cy="28" r="15"/><circle cx="78" cy="28" r="15"/>
+      <ellipse cx="50" cy="88" rx="27" ry="20"/>
+      <ellipse cx="17" cy="84" rx="11" ry="9.5"/><ellipse cx="83" cy="84" rx="11" ry="9.5"/>
+      <ellipse cx="50" cy="50" rx="32" ry="29"/>
+    </g>
+    <circle cx="22" cy="28" r="7.5" fill="#f3d3ad" opacity=".85"/><circle cx="78" cy="28" r="7.5" fill="#f3d3ad" opacity=".85"/>
+    <ellipse cx="50" cy="63" rx="15" ry="11.5" fill="#f3d3ad"/>
+    <ellipse cx="38" cy="45" rx="4.3" ry="5.2" fill="#2a1a12"/><ellipse cx="62" cy="45" rx="4.3" ry="5.2" fill="#2a1a12"/>
+    <circle cx="36.4" cy="43" r="1.5" fill="#fff" opacity=".9"/><circle cx="60.4" cy="43" r="1.5" fill="#fff" opacity=".9"/>
+    <ellipse cx="50" cy="57.5" rx="5.2" ry="3.9" fill="#2a1a12"/>
+    <path d="M50 61.5v3.4M50 65c-2.2 3-6 2.6-7.4.4M50 65c2.2 3 6 2.6 7.4.4" stroke="#2a1a12" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+const ghostSVG=(size,color)=>`<svg width="${size}" height="${size}" viewBox="0 0 100 100">
+  <path d="${GHOST_D}" fill="${color||'#fff'}"/><circle cx="38" cy="44" r="6" fill="#3fae63"/><circle cx="62" cy="44" r="6" fill="#3fae63"/></svg>`;
+
+/* ======================= данные витрины ======================= */
+const CATS=[
+ {id:'#10 834',p:'30 473',b1:'#86e35c',b2:'#3f9e2e',ac:'#1f6b22',eye:'#20301a',pat:'plain', bg:['#6e3a46','#43242e'],pc:'#ff9fb0'},
+ {id:'#10 842',p:'30 474',b1:'#ff6a5a',b2:'#b32b2f',ac:'#ffd34d',eye:'#ffd977',pat:'poly',  bg:['#9a6a2c','#5d3d18'],pc:'#ffd08a'},
+ {id:'#9 730', p:'30 475',b1:'#8fd8d0',b2:'#3f8f92',ac:'#2a6d74',eye:'#e9f3f2',pat:'plain', bg:['#9a7430','#5c431a'],pc:'#ffe3a6'},
+ {id:'#15 713',p:'30 999',b1:'#a8e05a',b2:'#4d8f2a',ac:'#2e5f1c',eye:'#8ff07a',pat:'stripes',bg:['#8a6a2e','#4e3a18'],pc:'#ffe0a0'},
+ {id:'#10 277',p:'31 799',b1:'#ff8ad4',b2:'#7a5cff',ac:'#ffd34d',eye:'#fff3a8',pat:'plain', bg:['#2f7f84','#174649'],pc:'#a9ecef'},
+ {id:'#439',   p:'31 800',b1:'#9ad6f5',b2:'#4a9ad4',ac:'#f5a93c',eye:'#ffd977',pat:'spots', bg:['#4b7a46','#2a4628'],pc:'#b7e8a8'},
+ {id:'#11 592',p:'31 800',b1:'#ff5f4f',b2:'#aa1f22',ac:'#ffd34d',eye:'#ffd977',pat:'plain', bg:['#4e7a4a','#2b462a'],pc:'#b7e8a8'},
+ {id:'#18 176',p:'32 000',b1:'#edf1f4',b2:'#a9b7c2',ac:'#7d8e9e',eye:'#dfe8ef',pat:'plain', bg:['#7f8f4a','#49532a'],pc:'#e2eab0'},
+ {id:'#16 886',p:'32 699',b1:'#7ce05a',b2:'#2b7a2a',ac:'#ff5f4f',eye:'#c8ff9a',pat:'poly',  bg:['#8a6a2e','#4e3a18'],pc:'#ffe0a0'},
+ {id:'#10 701',p:'33 250',b1:'#a8e05a',b2:'#4d8f2a',ac:'#2e5f1c',eye:'#8ff07a',pat:'stripes',bg:['#4e7a4a','#2b462a'],pc:'#b7e8a8'},
+ {id:'#12 544',p:'33 333',b1:'#7f8ea0',b2:'#39465a',ac:'#ff79c6',eye:'#ffd977',pat:'spots', bg:['#3f7a92','#1f4552'],pc:'#a9dcef'},
+ {id:'#15 927',p:'33 499',b1:'#edf1f4',b2:'#a9b7c2',ac:'#7d8e9e',eye:'#dfe8ef',pat:'plain', bg:['#9a5a46','#5c3328'],pc:'#ffb9a0'},
+ {id:'#2 201', p:'33 900',b1:'#ffc95c',b2:'#d8832a',ac:'#8a4a12',eye:'#3a2a12',pat:'stripes',bg:['#3f6a7a','#213c46'],pc:'#a9dcef'},
+ {id:'#7 118', p:'34 120',b1:'#b58cff',b2:'#6a3fd0',ac:'#ffd34d',eye:'#ffe8a8',pat:'spots', bg:['#53496e','#2c2740'],pc:'#cfc0ff'},
+ {id:'#9 004', p:'34 500',b1:'#5fe0c0',b2:'#1f8f8a',ac:'#0f5e5c',eye:'#d8fff5',pat:'plain', bg:['#6a4a7a','#3a2846'],pc:'#e0bfff'},
+ {id:'#1 777', p:'35 000',b1:'#ff9a5c',b2:'#d04a2a',ac:'#7a2a12',eye:'#ffe0a8',pat:'stripes',bg:['#4a5f7a','#283646'],pc:'#b8ccea'},
+ {id:'#13 090',p:'35 400',b1:'#9ad6f5',b2:'#4a9ad4',ac:'#1f5f8f',eye:'#eaf6ff',pat:'plain', bg:['#7a4a5f','#452836'],pc:'#ffb9cf'},
+ {id:'#6 612', p:'36 000',b1:'#d8e05a',b2:'#8f9e2a',ac:'#5f6b1c',eye:'#3a3a12',pat:'spots', bg:['#2f6a52','#17402f'],pc:'#a8efc8'}
+];
+const PICK=4;                      /* выбранный кот */
+const CARD_W=122, CARD_H=150, GAP=7, PAD=10, GRID_TOP=98;
+
+/* ======================= данные переписок ======================= */
+const DOX=[
+ {k:'pill',txt:'Сегодня'},
+ {k:'typing',t0:'d1type',t1:'d1'},
+ {k:'them',t:'d1',time:'21:05',txt:'здарова, на тебя заказали докс, если в течение 1 часа не будет отправлен нфт подарок, то данные будут слиты в сеть'},
+ {k:'me',t:'sendQ',time:'21:06',txt:'ты кто?'},
+ {k:'typing',t0:'d2type',t1:'d2'},
+ {k:'them',t:'d2',time:'21:06',txt:'тебе это не нужно знать, давай быстрее максимка'},
+ {k:'me',t:'sendOk',time:'21:07',txt:'хорошо, хорошо. Щас отправлю подарок'},
+ {k:'typing',t0:'d3type',t1:'d3'},
+ {k:'them',t:'d3',time:'21:07',txt:'жду'},
+ {k:'me',t:'sendNo',time:'21:08',txt:'черт, у меня нету звёзд на передачу'},
+ {k:'typing',t0:'d4type',t1:'gift1'},
+ {k:'gift',t:'gift1',time:'21:08',b1:'#d6a05f',b2:'#8a5527',bg:['#3f5f7a','#20374a']},
+ {k:'gift',t:'gift2',time:'21:08',b1:'#d6a05f',b2:'#8a5527',bg:['#5f4a7a','#332846']},
+ {k:'pill',txt:'Аккаунт удалён',t:'ghost'}
+];
+const BOTMSG=[
+ {k:'pill',txt:'Сегодня'},
+ {k:'them',t:-1,time:'20:51',txt:'Привет. Пришлите @username — и я проверю аккаунт.'},
+ {k:'me',t:'sendU',time:'21:09',txt:'@doxsv_tbog',mono:true},
+ {k:'typing',t0:'botTyping',t1:'botExec'},
+ {k:'exec',t:'botExec',time:'21:09'}
+];
+
+/* ======================= построение DOM ======================= */
+function kbHTML(layout){
+  const rows=layout.map(r=>{
+    const keys=r.map(kk=>{
+      if(typeof kk==='string') return `<div class="key" data-ch="${kk}"><span class="fl"></span>${kk}</div>`;
+      if(kk.sp) return `<div class="key sp"><span class="fl"></span></div>`;
+      return `<div class="key fn"${kk.w?` style="flex:0 0 ${kk.w}px"`:''}>${kk.t}</div>`;
+    }).join('');
+    return `<div class="krow"${r.pad?` style="padding:0 ${r.pad}px"`:''}>${keys}</div>`;
+  }).join('');
+  return `<div class="kb"><div class="kblayer">${rows}</div></div>`;
+}
+const RU=[['й','ц','у','к','е','н','г','ш','щ','з','х','ъ'],
+          ['ф','ы','в','а','п','р','о','л','д','ж','э'],
+          [{t:'⇧'},'я','ч','с','м','и','т','ь','б','ю',{t:'⌫'}],
+          [{t:'?123'},',',{sp:1},'.','?',{t:'⏎'}]];
+const LAT=[['q','w','e','r','t','y','u','i','o','p'],
+           ['a','s','d','f','g','h','j','k','l'],
+           [{t:'⇧'},'z','x','c','v','b','n','m',{t:'⌫'}],
+           [{t:'?123'},'@',{sp:1},'_','.',{t:'⏎'}]];
+const BACK=`<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#9fb3c4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4.5 6.5 10l6 5.5"/></svg>`;
+const CHEV=`<svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 4 5 7 8 4"/></svg>`;
+const BOTICO=s=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7.5" width="16" height="12" rx="4"/><path d="M12 7.5V4.2"/><circle cx="12" cy="3.2" r="1.3" fill="#fff" stroke="none"/><circle cx="9.2" cy="13" r="1.35" fill="#fff" stroke="none"/><circle cx="14.8" cy="13" r="1.35" fill="#fff" stroke="none"/><path d="M9.6 16.6h4.8"/></svg>`;
+const SENDICO=`<svg width="18" height="18" viewBox="0 0 24 24" fill="#0e1621"><path d="M3.4 11.3 20 4.2c.9-.4 1.8.5 1.4 1.4l-7.1 16.6c-.4.9-1.7.8-2-.2l-1.9-6-6-1.9c-1-.3-1.1-1.6-.2-2Z"/></svg>`;
+const CLIP=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7d8e9e" stroke-width="1.8" stroke-linecap="round"><path d="M14.5 6.5 8 13a3 3 0 0 0 4.2 4.2l7-7a4.5 4.5 0 0 0-6.4-6.4l-7.2 7.2a6.5 6.5 0 0 0 9.2 9.2L19 16"/></svg>`;
+const SMILE=`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7d8e9e" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.2c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><circle cx="9.2" cy="9.8" r=".9" fill="#7d8e9e" stroke="none"/><circle cx="14.8" cy="9.8" r=".9" fill="#7d8e9e" stroke="none"/></svg>`;
+
+function msgsHTML(list,idp){
+  return list.map((m,i)=>{
+    const id=`${idp}_${i}`;
+    if(m.k==='pill')   return `<div class="pill" id="${id}">${m.txt}</div>`;
+    if(m.k==='typing') return `<div class="row them" id="${id}"><div class="bub them"><span class="dots"><i></i><i></i><i></i></span></div></div>`;
+    if(m.k==='gift')   return `<div class="row them" id="${id}"><div class="bub them gift">
+        <div class="giftglow"></div>
+        <div class="giftcard"><div class="gbg" style="background:linear-gradient(160deg,${m.bg[0]},${m.bg[1]})">
+          ${patSVG('#ffffff')}<div style="position:relative;z-index:2">${bearSVG(74,m.b1,m.b2)}</div></div>
+          <div class="glab"><b>Подарок</b><span class="gprice">${star(11,'#ffd977')}13</span></div></div>
+        <span class="time">${m.time}</span></div></div>`;
+    if(m.k==='exec')   return `<div class="row them" id="${id}"><div class="bub them" id="${id}_b">
+        <div class="execrow">
+          <div class="execline">
+            <span id="lbl_exec"><svg class="spin" id="spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 9 9"/></svg><span id="exectext">выполняю</span></span>
+            <span id="lbl_done" style="opacity:0"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6fd48a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"/></svg><span style="color:#cfe9d6">готово</span></span>
+          </div>
+          <div class="pbar" id="pbar_w"><i id="pbar"></i></div>
+          <div class="pct" id="pct">0%</div>
+        </div><span class="time">${m.time}</span></div></div>`;
+    return `<div class="row ${m.k}" id="${id}"><div class="bub ${m.k}"><span${m.mono?' class="mono"':''}>${m.txt}</span><span class="time">${m.time}</span></div></div>`;
+  }).join('');
+}
+
+const cardsHTML=CATS.map((c,i)=>`<div class="card" id="card_${i}">
+  <div class="cbg" style="background:radial-gradient(85% 70% at 50% 35%,${c.bg[0]},${c.bg[1]})"></div>
+  ${patSVG(c.pc)}
+  <div class="num">${c.id}</div>
+  ${catSVG(c,84,'style="margin-top:-6px"')}
+  <div class="price">${star(11)}${c.p}</div>
+  <div class="glow"></div><div class="tapfl"></div>
+</div>`).join('');
+
+$('screens').innerHTML=`
+<!-- ======== S1: витрина ======== -->
+<div class="screen" id="sc_gift">
+  <div class="header">
+    <div class="iconbtn">${BACK}</div>
+    <div class="htitle"><div class="hname">Scared Cat</div>
+      <div class="hsub"><span>коллекция · 19 112 подарков</span></div></div>
+    <div class="avwrap" style="position:relative;margin-right:2px">
+      <div class="av av-me av-36" id="profav">М</div>
+      <i id="avring" style="position:absolute;inset:-5px;border-radius:50%;opacity:0;
+         box-shadow:0 0 0 2px #ffd977,0 0 22px rgba(255,210,110,.85)"></i>
+    </div>
+  </div>
+  <div class="chips">
+    <div class="chip on">${star(11)}Цена ↓</div>
+    <div class="chip">Модель ${CHEV}</div>
+    <div class="chip">Фон ${CHEV}</div>
+    <div class="chip">Узор ${CHEV}</div>
+  </div>
+  <div class="gridwrap"><div id="grid">${cardsHTML}</div></div>
+  <div class="dim" id="dim_gift"></div>
+</div>
+
+<!-- ======== список чатов ======== -->
+<div class="screen" id="sc_list">
+  <div class="listhead"><h1>Чаты</h1>
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#8fa3b5" stroke-width="1.7" stroke-linecap="round"><circle cx="7.6" cy="7.6" r="5.4"/><path d="M11.6 11.6 16 16"/></svg>
+  </div>
+  <div class="rows">
+    <div class="lrow" id="row_doxer" style="position:absolute;top:0;left:0;right:0">
+      <div class="hl"></div>
+      <div class="avwrap"><div class="av av-q av-50" id="row_dox_av">?</div>
+        <div class="av av-ghost av-50" id="row_dox_gh" style="position:absolute;inset:0;opacity:0">${ghostSVG(34,'#fff')}</div></div>
+      <div class="meta"><div class="top"><div class="lname" id="row_dox_name">doxsv#tbog</div></div>
+        <div class="lmsg" id="row_dox_msg">здарова, на тебя заказали докс…</div></div>
+      <div class="lright"><div class="ltime">21:05</div><div class="unread" id="row_dox_unread">1</div></div>
+      <div class="sepline"></div>
+    </div>
+    <div id="restrows" style="position:absolute;top:0;left:0;right:0;will-change:transform">
+      <div class="lrow" id="row_bot">
+        <div class="hl"></div>
+        <div class="avwrap"><div class="av av-bot av-50">${BOTICO(26)}</div></div>
+        <div class="meta"><div class="top"><div class="lname">MorphSnos</div><div class="badge">BOT</div></div>
+          <div class="lmsg" id="row_bot_msg">Пришлите @username</div></div>
+        <div class="lright"><div class="ltime">20:51</div></div>
+        <div class="sepline"></div>
+      </div>
+      <div class="lrow">
+        <div class="hl"></div>
+        <div class="avwrap"><div class="av av-50" style="background:linear-gradient(145deg,#f58fb4,#c7467d)">А</div></div>
+        <div class="meta"><div class="top"><div class="lname">Аня</div></div><div class="lmsg">ок, завтра созвонимся</div></div>
+        <div class="lright"><div class="ltime">19:20</div></div><div class="sepline"></div>
+      </div>
+      <div class="lrow">
+        <div class="hl"></div>
+        <div class="avwrap"><div class="av av-50" style="background:linear-gradient(145deg,#6fd48a,#2f9e63)">П</div></div>
+        <div class="meta"><div class="top"><div class="lname">Проект</div></div><div class="lmsg">Макс: закинул макеты в папку</div></div>
+        <div class="lright"><div class="ltime">18:44</div></div><div class="sepline"></div>
+      </div>
+      <div class="lrow">
+        <div class="hl"></div>
+        <div class="avwrap"><div class="av av-50" style="background:linear-gradient(145deg,#5fb8f0,#2f72c4)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linejoin="round"><path d="M6.5 4h11v16l-5.5-4.2L6.5 20V4Z"/></svg></div></div>
+        <div class="meta"><div class="top"><div class="lname">Избранное</div></div><div class="lmsg">ссылка на документ</div></div>
+        <div class="lright"><div class="ltime">11:02</div></div><div class="sepline"></div>
+      </div>
+    </div>
+  </div>
+  <div class="dim" id="dim_list"></div>
+</div>
+
+<!-- ======== чат с доксером ======== -->
+<div class="screen" id="sc_dox">
+  <div class="header">
+    <div class="hvariant" id="hdr_alive">
+      <div class="iconbtn" id="dox_back">${BACK}</div>
+      <div class="av av-q av-36" id="dox_av">?</div>
+      <div class="htitle"><div class="hname">doxsv#tbog</div>
+        <div class="hsub"><span id="dox_seen">онлайн</span><span class="typing" id="dox_typing" style="opacity:0">печатает…</span></div></div>
+    </div>
+    <div class="hvariant" id="hdr_dead" style="opacity:0">
+      <div class="iconbtn">${BACK}</div>
+      <div class="av av-ghost av-36">${ghostSVG(24,'#fff')}</div>
+      <div class="htitle"><div class="hname" style="color:#aebecb">Удалённый аккаунт</div>
+        <div class="hsub"><span style="color:#5e7081">был(а) давно</span></div></div>
+    </div>
+  </div>
+  <div class="wall" id="dox_wall"><div class="msgs" id="dox_msgs">${msgsHTML(DOX,'dox')}</div></div>
+  <div class="botbottom" id="doxbottom">
+    <div class="inputbar">
+      ${CLIP}
+      <div class="field"><span class="ph" id="dox_ph">Сообщение</span><span id="dox_typed" style="white-space:nowrap;will-change:transform"></span><span class="caret" id="dox_caret" style="opacity:0"></span></div>
+      ${SMILE}
+      <div class="send" id="dox_send" style="opacity:0">${SENDICO}</div>
+    </div>
+    ${kbHTML(RU)}
+  </div>
+  <div class="delbar" id="delbar"><div class="delbtn" id="delbtn">Удалить чат<span class="fl"></span></div></div>
+  <div class="dim" id="dim_dox"></div>
+</div>
+
+<!-- ======== чат с ботом ======== -->
+<div class="screen" id="sc_bot">
+  <div class="header"><div class="hvariant">
+    <div class="iconbtn" id="bot_back">${BACK}</div>
+    <div class="av av-bot av-36">${BOTICO(20)}</div>
+    <div class="htitle"><div class="hname">MorphSnos</div><div class="hsub"><span>бот</span></div></div>
+  </div></div>
+  <div class="wall" id="bot_wall"><div class="msgs" id="bot_msgs">${msgsHTML(BOTMSG,'bot')}</div></div>
+  <div class="botbottom" id="botbottom">
+    <div class="inputbar">
+      ${CLIP}
+      <div class="field"><span class="ph" id="bot_ph">Сообщение</span><span class="mono" id="bot_typed" style="white-space:nowrap;will-change:transform"></span><span class="caret" id="bot_caret" style="opacity:0"></span></div>
+      ${SMILE}
+      <div class="send" id="bot_send" style="opacity:0">${SENDICO}</div>
+    </div>
+    ${kbHTML(LAT)}
+  </div>
+  <div class="dim" id="dim_bot"></div>
+</div>`;
+
+/* ---- карточка подарка, модалка, летящий подарок, таймер, уведомление ---- */
+const C=CATS[PICK];
+$('sheet').innerHTML=`
+  <div class="hero">
+    <div class="cbg" style="background:radial-gradient(80% 70% at 50% 35%,${C.bg[0]},${C.bg[1]})"></div>
+    ${patSVG(C.pc)}
+    <div style="position:relative;z-index:2" id="sheetcat">${catSVG(C,168)}</div>
+  </div>
+  <div class="body">
+    <h2>Scared Cat <span style="color:#8fb9dd">${C.id}</span></h2>
+    <div class="sub">коллекционный подарок · 1 из 19 112</div>
+    <div class="attrs">
+      <div class="attr"><span class="k">Модель</span><span class="v">Неон<span class="pc">1,2%</span></span></div>
+      <div class="attr"><span class="k">Фон</span><span class="v">Бирюза<span class="pc">0,8%</span></span></div>
+      <div class="attr"><span class="k">Узор</span><span class="v">Призраки<span class="pc">0,5%</span></span></div>
+    </div>
+    <div class="btn" id="buybtn">Купить за ${star(14)} ${C.p}<span class="fl"></span></div>
+  </div>`;
+$('modal').innerHTML=`
+  <h3>Вы подтверждаете оплату?</h3>
+  <p>Scared Cat ${C.id} перейдёт в ваш профиль</p>
+  <div class="pay">${star(16,'#ffd977')} ${C.p}</div>
+  <div class="btns">
+    <div><div class="btn ghostbtn" id="btn_no">Отмена<span class="fl"></span></div></div>
+    <div><div class="btn" id="btn_yes">Да<span class="fl"></span></div></div>
+  </div>`;
+$('flyer').innerHTML=`<div class="cbg" style="background:radial-gradient(80% 70% at 50% 35%,${C.bg[0]},${C.bg[1]})"></div>
+  <div style="position:relative;z-index:2">${catSVG(C,46)}</div>`;
+$('timer').innerHTML=`<div class="tglow" id="tglow"></div>
+  <svg viewBox="0 0 62 62"><circle cx="31" cy="31" r="26" fill="rgba(14,22,33,.82)" stroke="rgba(255,255,255,.08)" stroke-width="2"/>
+  <circle id="tring" cx="31" cy="31" r="26" fill="none" stroke="#ff6a52" stroke-width="3.2" stroke-linecap="round"
+    transform="rotate(-90 31 31)" stroke-dasharray="163.4" stroke-dashoffset="0"/></svg>
+  <div class="tnum" id="tnum">3:00</div>`;
+$('notif').innerHTML=`<div class="av av-q av-36">?</div>
+  <div class="ntxt"><div class="nn"><span>doxsv#tbog</span><i>сейчас</i></div>
+  <div class="nb">здарова, на тебя заказали докс, если в течение 1 часа не будет отправлен нфт подарок, то данные будут слиты в сеть</div></div>`;
+
+/* sparks */
+const SPARKS=[];
+for(let i=0;i<30;i++){
+  const d=document.createElement('div'); d.className='spark';
+  const hue=rnd(i*3.1)>.5?'#ffd977':'#9fe0ff';
+  d.innerHTML=`<i style="background:${hue};box-shadow:0 0 12px ${hue},0 0 24px ${hue}"></i>`;
+  $('sparks').appendChild(d); SPARKS.push(d);
+}
+</script>
+<script>
+/* ======================= геометрия, кэш узлов ======================= */
+const SC={gift:$('sc_gift'),list:$('sc_list'),dox:$('sc_dox'),bot:$('sc_bot')};
+const DIM={gift:$('dim_gift'),list:$('dim_list'),dox:$('dim_dox'),bot:$('dim_bot')};
+const CARD_EL=CATS.map((c,i)=>$('card_'+i));
+const CAT_EL=CARD_EL.map(e=>e.querySelector('.cat'));
+const GLOW_EL=CARD_EL.map(e=>e.querySelector('.glow'));
+const TAPFL_EL=CARD_EL.map(e=>e.querySelector('.tapfl'));
+const KM={};
+['dox','bot'].forEach(w=>{
+  KM[w]={};
+  document.querySelectorAll('#'+w+'bottom .key[data-ch]').forEach(el=>{
+    const c=el.dataset.ch;(KM[w][c]=KM[w][c]||[]).push(el.querySelector('.fl'));
+  });
+  KM[w].__all=[...document.querySelectorAll('#'+w+'bottom .key .fl')];
+});
+$('mback').style.zIndex='44';
+set($('sheet'),{left:'50px',top:'118px',width:'300px'});
+set($('modal'),{top:'214px'});
+const SH_W=300, SH_H=$('sheet').offsetHeight;
+const RECT=el=>{const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2}};
+const P_BUY=RECT($('buybtn')), P_YES=RECT($('btn_yes'));
+const PICK_COL=PICK%3, PICK_ROW=(PICK/3)|0;
+const AV_TARGET={x:370,y:52};
+
+/* ---- скролл витрины ---- */
+function scrollY(t){
+  let y=0;
+  y+=lerp(0,-150,eOut(k(t,T.scrollA,T.scrollAe)));
+  y+=lerp(0,58,eOut(k(t,T.scrollB,T.scrollBe)));
+  return y;
+}
+/* положение выбранной карточки в координатах кадра */
+function cardPos(t){
+  return {x:PAD+PICK_COL*(CARD_W+GAP), y:26+GRID_TOP+PAD+PICK_ROW*(CARD_H+GAP)+scrollY(t)};
+}
+
+/* ======================= пузыри ======================= */
+function bubbleIn(rowEl,t,t0){
+  if(t0===undefined||t<t0-0.001){set(rowEl,{display:'none',opacity:'0'});return 0}
+  set(rowEl,{display:rowEl.classList.contains('pill')?'block':'flex'});
+  const p=k(t,t0,t0+0.34), e=eBack(p);
+  const b=rowEl.firstElementChild||rowEl;
+  set(rowEl,{opacity:String(clamp(k(t,t0,t0+0.18)))});
+  if(b!==rowEl) set(b,{transform:`translateY(${lerp(10,0,eOut(p)).toFixed(2)}px) scale(${lerp(.86,1,e).toFixed(4)})`,
+    transformOrigin: rowEl.classList.contains('me')?'100% 100%':'0% 100%'});
+  return 1;
+}
 function showTyping(rowEl,t,t0,t1){
-  if(t<t0||t>=t1){hideRow(rowEl);return}
+  if(t<t0||t>=t1){set(rowEl,{display:'none',opacity:'0'});return}
   set(rowEl,{display:'flex'});
   bubbleIn(rowEl,t,t0);
   const fo=k(t,t1-0.14,t1);
   set(rowEl,{opacity:String(clamp(k(t,t0,t0+0.18))*(1-fo))});
-  const ds=rowEl.querySelectorAll('.dots i');
-  ds.forEach((d,i)=>{
+  rowEl.querySelectorAll('.dots i').forEach((d,i)=>{
     const ph=((t-t0)*1.45-i*0.17)%1;
     const s=0.62+0.38*Math.max(0,Math.sin(Math.PI*clamp(ph*1.6)));
     d.style.transform=`scale(${s.toFixed(3)})`;
     d.style.opacity=(0.45+0.55*(s-0.62)/0.38).toFixed(3);
   });
 }
+function renderMsgs(list,idp,t){
+  list.forEach((m,i)=>{
+    const el=$(`${idp}_${i}`);
+    if(m.k==='typing'){showTyping(el,t,T[m.t0],T[m.t1]);return}
+    const t0 = m.t===undefined?-1:(typeof m.t==='number'?m.t:T[m.t]);
+    bubbleIn(el,t,t0<0?-1:t0);
+    if(m.k==='gift'){
+      const g=el.querySelector('.giftglow');
+      const p=clamp(1-Math.abs(t-(t0+0.18))/0.8);
+      g.style.opacity=(p*0.85).toFixed(3);
+    }
+  });
+}
 
-/* ======================= main render ======================= */
+/* ======================= печать в поле ввода ======================= */
+const PH_DOX=[{a:T.qA,b:T.qB,s:T.sendQ,txt:'ты кто?'},
+              {a:T.okA,b:T.okB,s:T.sendOk,txt:'хорошо, хорошо. Щас отправлю подарок'},
+              {a:T.noA,b:T.noB,s:T.sendNo,txt:'черт, у меня нету звёзд на передачу'}];
+const PH_BOT=[{a:T.uA,b:T.uB,s:T.sendU,txt:'@doxsv_tbog'}];
+function renderTyping(w,phases,t,kbOpen){
+  const typed=$(w+'_typed'), ph=$(w+'_ph'), caret=$(w+'_caret'), send=$(w+'_send');
+  let cur=null; for(const p of phases) if(t>=p.a-0.25) cur=p;
+  let txt='';
+  if(cur && t<cur.s) txt=cur.txt.slice(0,Math.round(k(t,cur.a,cur.b)*cur.txt.length));
+  typed.textContent=txt;
+  const over=Math.max(0,typed.scrollWidth-232);
+  typed.style.transform=`translateX(${-over}px)`;
+  ph.style.opacity=txt.length?'0':'1';
+  caret.style.opacity=(kbOpen&&((t*1.7)%1)<0.55)?'1':'0';
+  const vis=txt.length?1:0;
+  const pressT=cur?cur.s-0.08:-9;
+  const press=clamp(1-Math.abs(t-pressT)/0.16);
+  set(send,{opacity:vis?'1':'0',transform:`scale(${(1-0.14*press).toFixed(3)})`});
+  KM[w].__all.forEach(e=>e.style.opacity='0');
+  if(cur && t>=cur.a && t<cur.s){
+    const L=cur.txt.length;
+    for(let i=0;i<L;i++){
+      const ti=cur.a+((i+1)/L)*(cur.b-cur.a)-0.03;
+      const a=clamp(1-Math.abs(t-ti)/0.11);
+      if(a<=0) continue;
+      (KM[w][cur.txt[i].toLowerCase()]||[]).forEach(el=>{el.style.opacity=(a*.9).toFixed(3)});
+    }
+  }
+}
+
+/* ======================= тапы ======================= */
+const TAPS=[
+  {t:T.tapCat,  x:200, y:274, hold:null},
+  {t:T.tapBuy,  x:P_BUY.x, y:P_BUY.y, hold:null, btn:'buybtn'},
+  {t:T.tapYes,  x:P_YES.x, y:P_YES.y, hold:null, btn:'btn_yes'},
+  {t:T.tapNotif,x:200, y:62,  hold:null},
+  {t:T.sendQ-0.08, x:372,y:392},
+  {t:T.sendOk-0.08,x:372,y:392},
+  {t:T.sendNo-0.08,x:372,y:392},
+  {t:T.tapBack1,x:27, y:52,  hold:null},
+  {t:T.tapBot,  x:300,y:183, hold:'row_bot'},
+  {t:T.tapSend, x:372,y:392},
+  {t:T.tapBack2,x:27, y:52,  hold:null},
+  {t:T.tapDox,  x:300,y:113, hold:'row_doxer'}
+];
+const HOLDS=['row_bot','row_doxer'];
+
+/* ======================= основной рендер ======================= */
 function render(t){
-  /* ---- навигация между экранами ---- */
-  const pos={list:120,dox:120,bot:120};
-  let cur=START_SCREEN, idx=-1;
-  for(let i=0;i<NAV.length;i++) if(t>=NAV[i].t) idx=i;
+  /* ---------- навигация ---------- */
+  const pos={gift:120,list:120,dox:120,bot:120};
+  let idx=-1; for(let i=0;i<NAV.length;i++) if(t>=NAV[i].t) idx=i;
   for(const key in pos) DIM[key].style.opacity='0';
-  if(idx<0){ pos[cur]=0; }
+  if(idx<0){pos[START_SCREEN]=0}
   else{
     const n=NAV[idx], p=eOut4(k(t,n.t,n.t+NAVDUR));
-    if(n.dir==='push'){ pos[n.from]=-25*p; pos[n.to]=100*(1-p); DIM[n.from].style.opacity=(0.35*p).toFixed(3); }
-    else{ pos[n.from]=100*p; pos[n.to]=-25*(1-p); DIM[n.to].style.opacity=(0.35*(1-p)).toFixed(3); }
-    cur=n.to;
+    if(n.dir==='push'){pos[n.from]=-25*p;pos[n.to]=100*(1-p);DIM[n.from].style.opacity=(0.35*p).toFixed(3)}
+    else{pos[n.from]=100*p;pos[n.to]=-25*(1-p);DIM[n.to].style.opacity=(0.35*(1-p)).toFixed(3)}
   }
   for(const key in pos){
     const off=pos[key];
     set(SC[key],{transform:`translateX(${(off*4).toFixed(2)}px)`,visibility:off>=119?'hidden':'visible'});
   }
-
-  /* ---- экран: чат с доксером ---- */
-  const dead=k(t,T.deleted,T.deleted+0.42);
-  $('hdr_alive').style.opacity=(1-dead).toFixed(3);
-  $('hdr_dead').style.opacity=dead.toFixed(3);
-  set($('hdr_dead').querySelector('.htitle'),{transform:`translateY(${lerp(6,0,eOut(dead)).toFixed(2)}px)`});
-  set($('hdr_alive').querySelector('.htitle'),{transform:`translateY(${lerp(0,-6,dead).toFixed(2)}px)`});
-
-  const typingOn=k(t,T.typing,T.typing+0.2)*(1-k(t,T.msgIn-0.12,T.msgIn));
-  $('dox_typing').style.opacity=(typingOn*(1-dead)).toFixed(3);
-  $('dox_seen').style.opacity=((1-typingOn)*(1-dead)).toFixed(3);
-
-  showTyping($('dox_typebub'),t,T.typing+0.12,T.msgIn);
-  bubbleIn($('dox_msg'),t,T.msgIn);
-  set($('dox_msg_b'),{filter:`grayscale(${(dead*0.75).toFixed(2)}) brightness(${(1-dead*0.18).toFixed(3)})`});
-  const svc=k(t,T.deleted+0.18,T.deleted+0.6);
-  set($('dox_service'),{opacity:svc.toFixed(3),transform:`translateY(${lerp(8,0,eOut(svc)).toFixed(2)}px)`});
-  $('dox_lock').style.opacity=dead.toFixed(3);
-  $('row_dox_av').style.filter=`grayscale(${dead.toFixed(2)})`;
-
-  /* ---- экран: чат с ботом ---- */
-  const typedFull='@doxer123';
-  const tp=k(t,T.typeA,T.typeB);
-  const nch=t<T.typeA?0:Math.round(tp*typedFull.length);
-  const sent=t>=T.sendMsg;
-  $('bot_typed').textContent=sent?'':typedFull.slice(0,nch);
-  $('bot_ph').style.opacity=(nch>0&&!sent)?'0':(sent?clamp(k(t,T.sendMsg+0.08,T.sendMsg+0.3)).toFixed(3):'1');
-  const focused=t>=T.focus&&!sent;
-  $('bot_caret').style.opacity=focused?(((t*1.7)%1)<0.55?'1':'0'):'0';
-  const sendVis=clamp(k(t,T.typeA+0.05,T.typeA+0.28))*(sent?clamp(1-k(t,T.sendMsg,T.sendMsg+0.18)):1);
-  const press=clamp(1-Math.abs(t-T.tapSend)/0.16);
-  set($('bot_send'),{opacity:sendVis.toFixed(3),
-    transform:`scale(${(lerp(.6,1,eBack(sendVis))*(1-0.12*press)).toFixed(4)}) rotate(${lerp(-35,0,eOut(sendVis)).toFixed(1)}deg)`});
-
-  /* клавиатура */
-  const KBH=180;
-  const kbP=eOut(clamp(k(t,T.focus,T.focus+0.34)-k(t,T.kbHide,T.kbHide+0.30)));
-  set($('botbottom'),{transform:`translateY(${(KBH*(1-kbP)).toFixed(2)}px)`});
-  set($('bot_wall'),{bottom:(56+KBH*kbP).toFixed(1)+'px'});
-  const swT=T.typeA+(6/typedFull.length)*(T.typeB-T.typeA)-0.10, sw=k(t,swT,swT+0.2);
-  $('kb_abc').style.opacity=(1-sw).toFixed(3);
-  $('kb_123').style.opacity=sw.toFixed(3);
-  FLASHES.forEach(e=>e.style.opacity='0');
-  for(let i=0;i<typedFull.length;i++){
-    const ti=T.typeA+((i+1)/typedFull.length)*(T.typeB-T.typeA)-0.05;
-    const a=clamp(1-Math.abs(t-ti)/0.12);
-    if(a<=0) continue;
-    (KEYMAP[typedFull[i]]||[]).forEach(el=>{el.style.opacity=(a*.9).toFixed(3)});
+  /* плавная позиция таймера: в списке — снизу справа, в чатах — у шапки */
+  let listness=0;
+  if(idx<0) listness=0;
+  else{
+    const n=NAV[idx], p=eOut4(k(t,n.t,n.t+NAVDUR));
+    const a=n.from==='list'?1:0, b=n.to==='list'?1:0;
+    listness=lerp(a,b,p);
   }
 
-  bubbleIn($('bot_usermsg'),t,T.sendMsg);
-  showTyping($('bot_typebub'),t,T.botTyping,T.botExec);
-  bubbleIn($('bot_status'),t,T.botExec);
+  /* ================= СЦЕНА 1 — витрина ================= */
+  const sy=scrollY(t);
+  set($('grid'),{transform:`translateY(${sy.toFixed(2)}px)`});
+  CAT_EL.forEach((el,i)=>{
+    const ph=i*0.73, sw=Math.sin(t*1.7+ph), bob=Math.sin(t*2.3+ph*1.3);
+    set(el,{transform:`rotate(${(sw*2.6).toFixed(2)}deg) translateY(${(bob*1.6).toFixed(2)}px)`,
+            transformOrigin:'50% 85%'});
+  });
+  GLOW_EL.forEach((g,i)=>{
+    if(i!==PICK){g.style.opacity='0';return}
+    const on=k(t,T.hl,T.hl+0.3)*(1-k(t,T.sheetIn,T.sheetIn+0.2));
+    const pulse=0.55+0.45*Math.sin((t-T.hl)*5.2);
+    g.style.opacity=(on*(0.6+0.4*pulse)).toFixed(3);
+  });
+  TAPFL_EL.forEach((f,i)=>{f.style.opacity=(i===PICK?0.22*clamp(1-Math.abs(t-T.tapCat)/0.2):0).toFixed(3)});
 
+  /* --- карточка подарка --- */
+  const shIn=k(t,T.sheetIn,T.sheetIn+0.52);
+  const shOut=k(t,T.fly,T.fly+0.3);
+  const cp=cardPos(T.tapCat);
+  const sOpen=eOut(shIn)*(1-eOut(shOut));
+  const sc0=CARD_W/SH_W, scv=lerp(sc0,1,eOut(shIn))*lerp(1,0.92,eOut(shOut));
+  const tx=lerp(cp.x+CARD_W/2-(50+SH_W/2),0,eOut(shIn));
+  const ty=lerp(cp.y+CARD_H/2-(118+SH_H/2),0,eOut(shIn));
+  set($('sheet'),{opacity:(clamp(shIn*2.2)*(1-shOut)).toFixed(3),
+    transform:`translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) scale(${scv.toFixed(4)})`,
+    visibility:(shIn>0&&shOut<1)?'visible':'hidden'});
+  const sheetCat=$('sheetcat');
+  set(sheetCat,{transform:`rotate(${(Math.sin(t*1.5)*2.2).toFixed(2)}deg) translateY(${(Math.sin(t*2.1)*2).toFixed(2)}px)`,transformOrigin:'50% 85%'});
+  set($('buybtn').querySelector('.fl'),{opacity:(0.3*clamp(1-Math.abs(t-T.tapBuy)/0.18)).toFixed(3)});
+
+  /* --- модалка --- */
+  const mIn=k(t,T.modalIn,T.modalIn+0.3), mOut=k(t,T.modalOut,T.modalOut+0.26);
+  const mv=mIn*(1-mOut);
+  set($('modal'),{opacity:mv.toFixed(3),visibility:mv>0.001?'visible':'hidden',
+    transform:`translateY(${lerp(16,0,eBack(mIn)).toFixed(2)}px) scale(${(lerp(.92,1,eBack(mIn))*lerp(1,.96,mOut)).toFixed(4)})`});
+  set($('btn_yes').querySelector('.fl'),{opacity:(0.32*clamp(1-Math.abs(t-T.tapYes)/0.18)).toFixed(3)});
+  const back=Math.max(clamp(shIn*1.6)*(1-shOut)*0.55, mv*0.74);
+  set($('mback'),{opacity:back.toFixed(3),visibility:back>0.002?'visible':'hidden',zIndex:mv>0.02?'51':'44'});
+
+  /* --- полёт подарка в профиль --- */
+  const fp=k(t,T.fly,T.flyEnd);
+  const flying=t>=T.fly&&t<=T.flyEnd+0.1;
+  if(flying){
+    const e=eInOut(fp);
+    const p0={x:200,y:118+107}, p2=AV_TARGET, p1={x:318,y:96};
+    const bx=(1-e)*(1-e)*p0.x+2*(1-e)*e*p1.x+e*e*p2.x;
+    const by=(1-e)*(1-e)*p0.y+2*(1-e)*e*p1.y+e*e*p2.y;
+    const s=lerp(1,0.26,eInOut(fp)), spin=lerp(0,22,eOut(fp));
+    set($('flyer'),{opacity:String(clamp(k(t,T.fly,T.fly+0.12))*(1-k(t,T.flyEnd-0.08,T.flyEnd))),
+      left:bx.toFixed(1)+'px',top:by.toFixed(1)+'px',
+      transform:`scale(${s.toFixed(3)}) rotate(${spin.toFixed(1)}deg)`});
+  } else set($('flyer'),{opacity:'0'});
+  SPARKS.forEach((el,i)=>{
+    const born=T.fly+0.05+rnd(i)*0.82, life=0.5+rnd(i+40)*0.35;
+    const p=k(t,born,born+life);
+    if(p<=0||p>=1||t>T.flyEnd+0.9){el.style.opacity='0';return}
+    const e0=eInOut(clamp((born-T.fly)/(T.flyEnd-T.fly)));
+    const p0={x:200,y:225}, p2=AV_TARGET, p1={x:318,y:96};
+    const bx=(1-e0)*(1-e0)*p0.x+2*(1-e0)*e0*p1.x+e0*e0*p2.x;
+    const by=(1-e0)*(1-e0)*p0.y+2*(1-e0)*e0*p1.y+e0*e0*p2.y;
+    const ang=rnd(i+7)*6.283, dist=lerp(4,26+rnd(i+13)*22,eOut(p));
+    el.style.left=(bx+Math.cos(ang)*dist).toFixed(1)+'px';
+    el.style.top=(by+Math.sin(ang)*dist+p*p*14).toFixed(1)+'px';
+    el.style.opacity=((1-p)*(1-p)*0.95).toFixed(3);
+    el.style.transform=`scale(${lerp(1.25,0.25,p).toFixed(3)})`;
+  });
+  /* всплеск на аватаре профиля */
+  const pop=clamp(1-Math.abs(t-T.avPop)/0.42);
+  set($('profav'),{transform:`scale(${(1+0.3*Math.sin(Math.PI*pop)).toFixed(4)})`});
+  set($('avring'),{opacity:(pop*0.95).toFixed(3),transform:`scale(${lerp(.75,1.5,1-pop).toFixed(3)})`});
+
+  /* ================= таймер ================= */
+  const tvis=k(t,T.timerOn,T.timerOn+0.45)*(1-k(t,T.botDone+0.35,T.botDone+0.95));
+  const rem=Math.max(0,180-(Math.min(t,T.botDone)-T.timerOn)*5.6);
+  const mm=Math.floor(rem/60), ss=Math.floor(rem%60);
+  $('tnum').textContent=`${mm}:${ss<10?'0':''}${ss}`;
+  $('tring').setAttribute('stroke-dashoffset',(163.4*(1-rem/180)).toFixed(1));
+  const hot=rem<70?clamp((70-rem)/40):0;
+  const beat=0.5+0.5*Math.sin(t*7.5);
+  set($('timer'),{opacity:tvis.toFixed(3),top:lerp(30,470,listness).toFixed(1)+'px',
+    transform:`scale(${(lerp(.7,1,eBack(k(t,T.timerOn,T.timerOn+0.45)))*(1+0.05*hot*beat)).toFixed(4)})`});
+  set($('tglow'),{opacity:(hot*(0.35+0.4*beat)).toFixed(3)});
+  $('tnum').style.color=rem<70?'#ff6a52':'#ff8373';
+
+  /* ================= уведомление ================= */
+  const nIn=k(t,T.notifIn,T.notifIn+0.4), nOut=k(t,T.tapNotif,T.tapNotif+0.3);
+  const nv=nIn*(1-nOut);
+  const npress=clamp(1-Math.abs(t-T.tapNotif)/0.16);
+  set($('notif'),{opacity:nv.toFixed(3),visibility:nv>0.002?'visible':'hidden',
+    transform:`translateY(${lerp(-90,0,eOut(nIn)).toFixed(1)}px) scale(${(lerp(.94,1,eBack(nIn))*(1-0.03*npress)).toFixed(4)})`});
+
+  /* ================= список чатов ================= */
+  const rowIn=k(t,T.notifIn+0.1,T.notifIn+0.5);
+  set($('restrows'),{transform:`translateY(${(70*eOut(rowIn)).toFixed(2)}px)`});
+  set($('row_doxer'),{opacity:rowIn.toFixed(3)});
+  $('row_dox_unread').style.opacity=t<T.navDox1?'1':'0';
+  const gh=k(t,T.ghost,T.ghost+0.55);
+  $('row_dox_av').style.opacity=(1-k(t,T.ghost,T.ghost+0.3)).toFixed(3);
+  $('row_dox_gh').style.opacity=k(t,T.ghost+0.26,T.ghost+0.6).toFixed(3);
+  $('row_dox_name').textContent=t>=T.nameChg?'Удалённый аккаунт':'doxsv#tbog';
+  $('row_dox_name').style.color=t>=T.nameChg?'#aebecb':'';
+  $('row_dox_msg').textContent=t>=T.nameChg?'аккаунт удалён':'здарова, на тебя заказали докс…';
+  $('row_bot_msg').textContent=t>=T.botDone?'готово':'Пришлите @username';
+
+  /* ================= чат с доксером ================= */
+  $('hdr_alive').style.opacity=(1-k(t,T.ghost,T.ghost+0.3)).toFixed(3);
+  $('hdr_dead').style.opacity=k(t,T.ghost+0.26,T.ghost+0.6).toFixed(3);
+  set($('hdr_dead').querySelector('.htitle'),{transform:`translateY(${lerp(7,0,eOut(gh)).toFixed(2)}px)`});
+  set($('dox_av'),{filter:`blur(${(gh*5).toFixed(2)}px)`,transform:`scale(${lerp(1,1.25,gh).toFixed(3)})`});
+  let dtyping=0;
+  [[T.d1type,T.d1],[T.d2type,T.d2],[T.d3type,T.d3],[T.d4type,T.gift1]].forEach(([a,b])=>{
+    dtyping=Math.max(dtyping,k(t,a,a+0.18)*(1-k(t,b-0.12,b)));
+  });
+  $('dox_typing').style.opacity=(dtyping*(1-gh)).toFixed(3);
+  $('dox_seen').style.opacity=((1-dtyping)*(1-gh)).toFixed(3);
+  renderMsgs(DOX,'dox',t);
+
+  const kbDox=eOut(clamp(k(t,T.kbOn,T.kbOn+0.34)-k(t,T.kbOff,T.kbOff+0.30)));
+  set($('doxbottom'),{transform:`translateY(${(180*(1-kbDox)).toFixed(2)}px)`});
+  set($('dox_wall'),{bottom:(56+180*kbDox).toFixed(1)+'px'});
+  renderTyping('dox',PH_DOX,t,kbDox>0.5);
+  const dbar=k(t,T.delBtn,T.delBtn+0.4);
+  set($('delbar'),{opacity:dbar.toFixed(3)});
+  set($('delbtn'),{transform:`translateY(${lerp(14,0,eOut(dbar)).toFixed(2)}px) scale(${lerp(.96,1,eBack(dbar)).toFixed(4)})`});
+
+  /* ================= чат с ботом ================= */
+  const kbBot=eOut(clamp(k(t,T.focusBot,T.focusBot+0.34)-k(t,T.kbHide,T.kbHide+0.30)));
+  set($('botbottom'),{transform:`translateY(${(180*(1-kbBot)).toFixed(2)}px)`});
+  set($('bot_wall'),{bottom:(56+180*kbBot).toFixed(1)+'px'});
+  renderTyping('bot',PH_BOT,t,kbBot>0.5);
+  renderMsgs(BOTMSG,'bot',t);
+  const prog=k(t,T.botExec+0.12,T.botDone);
+  $('pbar').style.width=(100*prog).toFixed(1)+'%';
+  $('pct').textContent=Math.round(prog*100)+'%';
   const done=k(t,T.botDone,T.botDone+0.34);
   $('lbl_exec').style.opacity=(1-clamp(done*1.6)).toFixed(3);
   set($('lbl_exec'),{transform:`translateY(${(-5*done).toFixed(2)}px)`});
   $('lbl_done').style.opacity=clamp(k(t,T.botDone+0.1,T.botDone+0.4)).toFixed(3);
   set($('lbl_done'),{transform:`translateY(${lerp(6,0,eOut(k(t,T.botDone+0.1,T.botDone+0.45))).toFixed(2)}px)`});
-  const dn=Math.floor(Math.max(0,t-T.botExec)*2)%3+1;
-  $('exectext').textContent='выполняю'+'.'.repeat(dn);
+  $('pbar_w').style.opacity=(1-done).toFixed(3);
+  $('pct').style.opacity=(1-done).toFixed(3);
+  $('exectext').textContent='выполняю'+'.'.repeat(Math.floor(Math.max(0,t-T.botExec)*2)%3+1);
   set($('spin'),{transform:`rotate(${((t-T.botExec)*420%360).toFixed(1)}deg)`,transformOrigin:'50% 50%'});
-  if(t>=T.botDone+0.05){
-    const pop=clamp(k(t,T.botDone,T.botDone+0.3));
-    set($('bot_status_b'),{transform:`scale(${(1+0.045*Math.sin(Math.PI*pop)).toFixed(4)})`,transformOrigin:'0% 100%'});
-  } else set($('bot_status_b'),{transform:'none'});
+  if(t>=T.botDone){
+    const pp=clamp(k(t,T.botDone,T.botDone+0.3));
+    set($('bot_msgs').lastElementChild.firstElementChild,{transform:`scale(${(1+0.05*Math.sin(Math.PI*pp)).toFixed(4)})`,transformOrigin:'0% 100%'});
+  }
 
-  /* ---- список чатов: непрочитанное ---- */
-  $('row_dox_unread').style.opacity=t<T.nav1+0.1?'1':'0';
-  $('row_dox_name').textContent = t>=T.deleted+0.2 ? 'Удалённый аккаунт' : 'Незнакомец';
-  $('row_dox_msg').textContent  = t>=T.deleted+0.2 ? 'аккаунт удалён' : 'жди докс';
-
-  /* ---- указатель и тапы ---- */
-  let px=0,py=0,op=0,sc=1,rip=0,ripOp=0;
-  for(const key of ['dox_back','bot_back','row_bot','row_doxer','bot_send']){
-    const el=$(key); if(el){const h=el.querySelector?el.querySelector('.hl'):null; if(h)h.style.opacity='0';}
+  /* ================= указатель и тапы ================= */
+  HOLDS.forEach(id=>{const h=$(id).querySelector('.hl'); if(h)h.style.opacity='0'});
+  let px=0,py=0,op=0,psc=1,rip=0,ripOp=0;
+  /* жесты скролла */
+  const g1=k(t,T.scrollA,T.scrollAe), g2=k(t,T.scrollB,T.scrollBe);
+  if(t>=T.scrollA-0.35&&t<=T.scrollBe+0.35){
+    px=252; py=lerp(430,296,eOut(g1))+lerp(0,52,eOut(g2));
+    op=k(t,T.scrollA-0.35,T.scrollA-0.1)*(1-k(t,T.scrollBe+0.1,T.scrollBe+0.35));
+    psc=1;
   }
   for(let i=0;i<TAPS.length;i++){
     const tap=TAPS[i], prev=TAPS[i-1];
-    const appear=tap.t-0.62, gone=tap.t+0.42;
+    const appear=tap.t-0.6, gone=tap.t+0.42;
     if(t<appear||t>gone+0.1) continue;
-    const from = prev && (tap.t-prev.t)<1.6 ? {x:prev.x,y:prev.y} : {x:tap.x+(tap.x>200?-70:70),y:Math.min(tap.y+110,540)};
+    const from = prev && (tap.t-prev.t)<1.7 ? {x:prev.x,y:prev.y} : {x:tap.x+(tap.x>200?-72:72),y:Math.min(tap.y+108,544)};
     const mp=eInOut(k(t,appear,tap.t-0.06));
     px=lerp(from.x,tap.x,mp); py=lerp(from.y,tap.y,mp);
-    const fadeIn=k(t,appear,appear+0.18), fadeOut=k(t,tap.t+0.16,gone);
-    op=fadeIn*(1-fadeOut);
+    op=k(t,appear,appear+0.18)*(1-k(t,tap.t+0.16,gone));
     const pr=clamp(1-Math.abs(t-tap.t)/0.17);
-    sc=1-0.22*pr;
+    psc=1-0.22*pr;
     const rp=k(t,tap.t,tap.t+0.5);
-    if(rp>0&&rp<1){ rip=lerp(.55,2.9,eOut(rp)); ripOp=(1-rp)*0.75; }
-    if(tap.hold){
-      const el=$(tap.hold); const hl=el&&el.querySelector('.hl');
-      if(hl) hl.style.opacity=(0.30*clamp(1-Math.abs(t-tap.t)/0.28)).toFixed(3);
-    }
+    if(rp>0&&rp<1){rip=lerp(.55,2.9,eOut(rp));ripOp=(1-rp)*0.75}
+    if(tap.hold){const h=$(tap.hold).querySelector('.hl'); if(h)h.style.opacity=(0.3*clamp(1-Math.abs(t-tap.t)/0.28)).toFixed(3)}
   }
-  set($('ptr'),{left:px+'px',top:py+'px',opacity:op.toFixed(3),transform:`scale(${sc.toFixed(3)})`});
+  set($('ptr'),{left:px+'px',top:py+'px',opacity:op.toFixed(3),transform:`scale(${psc.toFixed(3)})`});
   set($('ripple'),{left:px+'px',top:py+'px',opacity:ripOp.toFixed(3),transform:`scale(${rip.toFixed(3)})`});
 
-  /* ---- вспышка при удалении + фейды ---- */
-  $('flash').style.opacity=(0.085*clamp(1-Math.abs(t-T.deleted)/0.16)).toFixed(3);
-  const fIn=1-k(t,0,0.55), fOut=k(t,T.END-0.55,T.END);
-  $('fade').style.opacity=Math.max(fIn,fOut).toFixed(3);
-  $('clock').textContent = t<T.sendMsg-0.5?'21:04':'21:05';
+  /* ================= эффекты кадра ================= */
+  const shA=clamp(1-(t-T.shake)/1.5)*(t>=T.shake?1:0);
+  const sh=shA*3.4;
+  set($('shake'),{transform:sh>0.01?`translate(${(Math.sin(t*41)*sh).toFixed(2)}px,${(Math.sin(t*37+1.3)*sh*0.7).toFixed(2)}px)`:'none'});
+  const vign=Math.max(clamp(1-Math.abs(t-(T.shake+0.5))/2.2)*0.75,
+                      k(t,T.d1,T.d1+0.5)*(1-k(t,T.okA,T.okA+0.6))*0.17);
+  set($('vign'),{opacity:(vign*(0.6+0.4*Math.sin(t*4.2))).toFixed(3)});
+  const aura=k(t,T.aura,T.aura+1.2);
+  set($('aura'),{opacity:(aura*(0.42+0.34*Math.sin(t*1.9))).toFixed(3)});
+  const fl=Math.max(0.1*clamp(1-Math.abs(t-T.avPop)/0.18),0.12*clamp(1-Math.abs(t-T.ghost)/0.2),
+                    0.08*clamp(1-Math.abs(t-T.botDone)/0.2));
+  $('flash').style.opacity=fl.toFixed(3);
+  $('fade').style.opacity=Math.max(1-k(t,0,0.6),k(t,T.END-0.8,T.END)).toFixed(3);
+  $('clock').textContent = t<T.navList1?'21:02':(t<T.sendQ?'21:05':(t<T.sendNo?'21:07':(t<T.sendU?'21:08':'21:09')));
 }
 
 /* ======================= субтитры ======================= */
 const CAPS=[
-  {t0:1.45,t1:4.15,ys:[[0,196]],
+  {t0:9.15,t1:12.10,ys:[[0,470]],
+   w:[['Подарок'],['добавлен','gold'],['в'],['профиль','gold']]},
+  {t0:20.40,t1:24.15,ys:[[0,232]],big:1,
+   w:[['Но'],['это'],['было'],['не'],['моё','dang'],['имя...','dang']]},
+  {t0:46.95,t1:50.40,ys:[[0,318]],
    w:[['Тебе'],['угрожают'],['доксом?','dang']]},
-  {t0:4.45,t1:6.75,ys:[[0,498],[5.58,168]],
+  {t0:50.70,t1:54.10,ys:[[0,318]],
    w:[['Есть'],['бот,'],['который'],['сносит','acc'],['аккаунты','acc'],['доксерам']]},
-  {t0:6.95,t1:9.60,ys:[[0,168]],
-   w:[['Просто'],['напиши'],['ему'],['юзернейм','acc']]},
-  {t0:10.40,t1:13.95,ys:[[0,250]],
-   w:[['и'],['он'],['удалит','ok'],['аккаунт','ok'],['недоброжелателю']]}
+  {t0:54.40,t1:58.80,ys:[[0,318]],
+   w:[['Просто'],['напиши'],['ему'],['юзернейм','acc'],['—'],['и'],['он'],['удалит','ok'],['аккаунт','ok'],['недоброжелателю']]}
 ];
 const CAPWRAP=$('capwrap');
 CAPS.forEach(c=>{
-  const b=document.createElement('div'); b.className='capblock';
+  const b=document.createElement('div'); b.className='capblock'+(c.big?' big':'');
   c.words=c.w.map(([txt,cls])=>{
     const sp=document.createElement('span'); sp.className='w'+(cls?' '+cls:''); sp.textContent=txt;
     b.appendChild(sp); b.appendChild(document.createTextNode(' ')); return sp;
@@ -584,28 +1050,21 @@ CAPS.forEach(c=>{
   c.fill=document.createElement('i'); bar.appendChild(c.fill); b.appendChild(bar);
   c.el=b; CAPWRAP.appendChild(b);
 });
-
 function renderCaps(t){
   for(const c of CAPS){
-    const live = t>=c.t0-0.05 && t<=c.t1+0.05;
-    if(!live){ c.el.style.opacity='0'; c.el.style.visibility='hidden'; continue; }
+    const live=t>=c.t0-0.05&&t<=c.t1+0.05;
+    if(!live){c.el.style.opacity='0';c.el.style.visibility='hidden';continue}
     c.el.style.visibility='visible';
-    /* позиция (плавный переезд между сценами) */
     let y=c.ys[0][1];
-    for(let i=1;i<c.ys.length;i++){
-      const [ts,yy]=c.ys[i];
-      y=lerp(y,yy,eInOut(k(t,ts,ts+0.42)));
-    }
+    for(let i=1;i<c.ys.length;i++){const [ts,yy]=c.ys[i]; y=lerp(y,yy,eInOut(k(t,ts,ts+0.42)))}
     const inP=k(t,c.t0,c.t0+0.26), outP=k(t,c.t1-0.32,c.t1);
-    const sc=lerp(.93,1,eBack(inP))*lerp(1,.97,outP);
+    const scl=lerp(.93,1,eBack(inP))*lerp(1,.97,outP);
     c.el.style.opacity=(inP*(1-outP)).toFixed(3);
-    c.el.style.transform=`translate(0,${(-50+(1-inP)*2).toFixed(2)}%) translateY(${y.toFixed(1)}px) translateY(${lerp(10,0,eOut(inP)).toFixed(1)}px) scale(${sc.toFixed(4)})`;
     c.el.style.top='0px';
-    /* пословное появление */
-    const spanT=(c.t1-0.45)-(c.t0+0.14), step=spanT/Math.max(c.words.length,1);
+    c.el.style.transform=`translate(0,${(-50+(1-inP)*2).toFixed(2)}%) translateY(${y.toFixed(1)}px) translateY(${lerp(10,0,eOut(inP)).toFixed(1)}px) scale(${scl.toFixed(4)})`;
+    const spanT=Math.min((c.t1-0.45)-(c.t0+0.14),0.40*c.words.length), step=spanT/Math.max(c.words.length,1);
     c.words.forEach((sp,i)=>{
-      const wt=c.t0+0.14+i*step;
-      const p=k(t,wt,wt+0.24);
+      const wt=c.t0+0.14+i*step, p=k(t,wt,wt+0.24);
       const pulse=clamp(1-Math.abs(t-(wt+0.13))/0.22);
       sp.style.opacity=p.toFixed(3);
       sp.style.transform=`translateY(${lerp(9,0,eOut(p)).toFixed(2)}px) scale(${(lerp(.72,1,eBack(p))+0.075*pulse).toFixed(4)})`;
@@ -613,10 +1072,9 @@ function renderCaps(t){
     c.fill.style.width=(100*clamp(k(t,c.t0,c.t1-0.2))).toFixed(1)+'%';
   }
 }
-
 window.__render=t=>{render(t);renderCaps(t);return true};
 window.__DUR=T.END;
-render(0);
+render(0); renderCaps(0);
 </script>
 </body>
 </html>
