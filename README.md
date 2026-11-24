@@ -7,9 +7,19 @@
 ## Результат (`out/`)
 | файл | разрешение | размер |
 |---|---|---|
-| `morphsnos_1200x1800_60fps.mp4` | 1200×1800 (2:3), 60 fps, 20.6 с | 2.4 МБ |
-| `morphsnos_800x1200_60fps.mp4` | 800×1200 | 1.1 МБ |
-| `morphsnos_400x600.gif` | 400×600, 15 fps | 2.8 МБ |
+| `morphsnos_1200x1800_60fps.mp4` | 1200×1800 (2:3), 60 fps, 20.6 с, со звуком | 3.7 МБ |
+| `morphsnos_800x1200_60fps.mp4` | 800×1200, со звуком | 1.9 МБ |
+| `morphsnos_400x600.gif` | 400×600, 15 fps, без звука | 3.6 МБ |
+
+## Субтитры и звук
+* Субтитры — массив `CAPS` в `src/scene.html`: текст по словам, время, акцентные классы
+  (`acc` / `dang` / `ok`) и `ys` — опорные точки вертикальной позиции, чтобы плашка
+  переезжала туда, где экран свободен.
+* `src/audio.py` синтезирует всю дорожку с нуля (numpy, без сэмплов): клики интерфейса,
+  свуши переходов, клавиатура, тёмное входящее уведомление, гул «обработки» с тиками,
+  аккорд «готово», удар на удалении аккаунта и тихий эмбиент-бед. Тайминг берётся из того
+  же словаря `T`, что и анимация. Результат — `out/soundtrack.wav`, нормализуется
+  до -14 LUFS при сборке.
 
 ## Как устроено
 * `src/scene.html` — сцена на HTML/CSS/JS. Вся анимация — чистая функция `window.__render(t)`,
@@ -21,7 +31,10 @@
 ```bash
 npm i playwright            # если нет
 node src/render.js --fps 60 --scale 3 --frames /tmp/frames
-ffmpeg -framerate 60 -i /tmp/frames/%05d.png -c:v libx264 -crf 17 -pix_fmt yuv420p \
+python3 src/audio.py
+ffmpeg -framerate 60 -i /tmp/frames/%05d.png -i out/soundtrack.wav \
+       -c:v libx264 -crf 17 -pix_fmt yuv420p \
+       -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:a aac -b:a 192k -shortest \
        -movflags +faststart out/morphsnos_1200x1800_60fps.mp4
 ```
 Отдельные кадры для проверки: `node src/render.js --preview "2.6,9.0,13.6" --frames /tmp/prev --scale 2`
